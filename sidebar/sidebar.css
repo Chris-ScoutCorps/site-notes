@@ -5,7 +5,8 @@ body {
 }
 
 .note {
-  border-bottom: 1px dashed gray;
+  padding: 2px;
+  border-top: 1px dashed gray;
 }
 
 .note textarea {
