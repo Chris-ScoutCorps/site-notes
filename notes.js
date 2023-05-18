@@ -90,7 +90,12 @@ async function reload() {
 
   appendAddNoteButton(tab.url);
 }
-reload();
 
-TABS.onActivated.addListener(reload);
-TABS.onUpdated.addListener(reload);
+reload().then(() => {
+  TABS.onActivated.addListener(reload);
+  TABS.onUpdated.addListener((_, update) => {
+    if (update.url) {
+      reload();
+    }
+  });
+});
