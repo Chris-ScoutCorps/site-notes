@@ -1,6 +1,6 @@
 'use strict';
 
-document.body.appendChild(document.createTextNode("popup js"));
+//document.body.appendChild(document.createTextNode("popup js"));
 
 const SIDEBAR_OPEN = 'site-notes-sidebar-open';
 const SIDEBAR_TOGGLE_ID = 'sidebar-toggle-button';

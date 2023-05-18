@@ -2,3 +2,7 @@ body {
   background-color: #7da7d8;
   color: #ffffff;
 }
+
+.note {
+  border-bottom: 1px dashed gray;
+}
