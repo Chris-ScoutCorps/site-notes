@@ -1,6 +1,10 @@
 'use strict';
 
-let NOTES = document.getElementById('notes');
+let DOMAIN_NOTES_LBL = document.getElementById('domain-notes-lbl');
+let DOMAIN_NOTES = document.getElementById('domain-notes');
+
+let PAGE_NOTES_LBL = document.getElementById('page-notes-lbl');
+let PAGE_NOTES = document.getElementById('page-notes');
 
 function uuidv4() {
   return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
@@ -8,17 +12,17 @@ function uuidv4() {
   );
 }
 
-function appendAddNoteButton(url) {
+function appendAddNoteButton(el, url) {
   let button = document.createElement('input');
   button.type = 'button';
   button.value = '+';
   button.addEventListener('click', () => {
-    addNote(url);
+    addNote(el, url);
   });
-  NOTES.appendChild(button);
+  el.appendChild(button);
 }
 
-function appendNote(url, uuid, text) {
+function appendNote(el, url, uuid, text) {
   let newContainer = document.createElement('div');
   newContainer.className = 'note';
   newContainer.setAttribute('note-id', uuid);
@@ -39,22 +43,17 @@ function appendNote(url, uuid, text) {
 
   newContainer.appendChild(newNote);
   newContainer.appendChild(deleteButton);
-  NOTES.appendChild(newContainer);
+  el.appendChild(newContainer);
 }
 
-async function addNote(url) {
+async function addNote(el, url) {
   let newId = uuidv4();
 
-  appendNote(url, newId, newId);
-  appendAddNoteButton(url);
+  appendNote(el, url, newId, newId);
+  appendAddNoteButton(el, url);
 
   let stored = (await STORAGE.get(url) || {})[url] || {};
-  STORAGE.set({
-    [url]: {
-      ...stored,
-      [newId]: newId,
-    },
-  });
+  STORAGE.set({ [url]: { ...stored, [newId]: newId } });
 }
 
 async function deleteNote(url, uuid) {
@@ -73,22 +72,38 @@ async function updateNote(url, uuid, newNote) {
 }
 
 async function reload() {
-  if (!NOTES) {
-    return;
+  let tab = (DOMAIN_NOTES || PAGE_NOTES) && (await TABS.query({ windowId: WINDOW_ID, active: true }))[0];
+  let url = new URL(tab.url);
+
+  if (DOMAIN_NOTES) {
+    DOMAIN_NOTES.innerHTML = '';
+
+    let domain = url.hostname ? url.hostname : (url.protocol + url.pathname);
+    DOMAIN_NOTES_LBL.innerText = `${domain} notes`;
+    let stored = (await STORAGE.get(domain) || {})[domain] || {};
+
+    Object.keys(stored).forEach(k => {
+      appendAddNoteButton(DOMAIN_NOTES, domain);
+      appendNote(DOMAIN_NOTES, domain, k, stored[k]);
+    });
+
+    appendAddNoteButton(DOMAIN_NOTES, domain);
   }
 
-  NOTES.innerHTML = '';
+  if (PAGE_NOTES) {
+    PAGE_NOTES.innerHTML = '';
 
-  let tab = (await TABS.query({ windowId: WINDOW_ID, active: true }))[0];
+    let pagepath = url.hostname ? (url.hostname + url.pathname) : url.href;
+    PAGE_NOTES_LBL.innerText = `${pagepath} notes`;
+    let stored = (await STORAGE.get(pagepath) || {})[pagepath] || {};
 
-  let stored = (await STORAGE.get(tab.url) || {})[tab.url] || {};
+    Object.keys(stored).forEach(k => {
+      appendAddNoteButton(PAGE_NOTES, pagepath);
+      appendNote(PAGE_NOTES, pagepath, k, stored[k]);
+    });
 
-  Object.keys(stored).forEach(k => {
-    appendAddNoteButton(tab.url);
-    appendNote(tab.url, k, stored[k]);
-  });
-
-  appendAddNoteButton(tab.url);
+    appendAddNoteButton(PAGE_NOTES, pagepath);
+  }
 }
 
 reload().then(() => {
