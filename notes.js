@@ -18,18 +18,30 @@ function appendAddNoteButton(url) {
   NOTES.appendChild(button);
 }
 
-function appendNote(uuid, text) {
-  let newNote = document.createElement('div');
-  newNote.className = 'note';
-  newNote.setAttribute('note-id', uuid);
+function appendNote(url, uuid, text) {
+  let newContainer = document.createElement('div');
+  newContainer.className = 'note';
+  newContainer.setAttribute('note-id', uuid);
+
+  let newNote = document.createElement('textarea');
   newNote.innerText = text;
-  NOTES.appendChild(newNote);
+
+  let deleteButton = document.createElement('input');
+  deleteButton.type = 'button';
+  deleteButton.value = '-';
+  deleteButton.addEventListener('click', () => {
+    deleteNote(url, uuid);
+  });
+
+  newContainer.appendChild(newNote);
+  newContainer.appendChild(deleteButton);
+  NOTES.appendChild(newContainer);
 }
 
 async function addNote(url) {
   let newId = uuidv4();
 
-  appendNote(newId, newId);
+  appendNote(url, newId, newId);
   appendAddNoteButton(url);
 
   let stored = (await STORAGE.get(url) || {})[url] || {};
@@ -39,6 +51,15 @@ async function addNote(url) {
       [newId]: newId,
     },
   });
+}
+
+async function deleteNote(url, uuid) {
+  let nodes = document.querySelectorAll(`[note-id="${uuid}"]`);
+  nodes.forEach(n => n.remove());
+
+  let stored = (await STORAGE.get(url) || {})[url] || {};
+  delete stored[uuid];
+  STORAGE.set({ [url]: stored });
 }
 
 async function reload() {
@@ -54,7 +75,7 @@ async function reload() {
 
   Object.keys(stored).forEach(k => {
     appendAddNoteButton(tab.url);
-    appendNote(k, stored[k]);
+    appendNote(tab.url, k, stored[k]);
   });
 
   appendAddNoteButton(tab.url);
@@ -63,4 +84,3 @@ reload();
 
 TABS.onActivated.addListener(reload);
 TABS.onUpdated.addListener(reload);
-
