@@ -6,3 +6,7 @@ body {
 .note {
   border-bottom: 1px dashed gray;
 }
+
+.note textarea {
+  width: 100%;
+}

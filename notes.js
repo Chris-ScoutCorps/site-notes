@@ -24,7 +24,11 @@ function appendNote(url, uuid, text) {
   newContainer.setAttribute('note-id', uuid);
 
   let newNote = document.createElement('textarea');
+  newNote.className = 'note-text';
   newNote.innerText = text;
+  newNote.addEventListener('keyup', (e) => {
+    updateNote(url, uuid, e.target.value);
+  });
 
   let deleteButton = document.createElement('input');
   deleteButton.type = 'button';
@@ -59,6 +63,12 @@ async function deleteNote(url, uuid) {
 
   let stored = (await STORAGE.get(url) || {})[url] || {};
   delete stored[uuid];
+  STORAGE.set({ [url]: stored });
+}
+
+async function updateNote(url, uuid, newNote) {
+  let stored = (await STORAGE.get(url) || {})[url] || {};
+  stored[uuid] = newNote;
   STORAGE.set({ [url]: stored });
 }
 
