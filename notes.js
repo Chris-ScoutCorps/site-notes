@@ -50,10 +50,10 @@ function appendNote(el, url, uuid, text) {
 async function addNote(el, url) {
   let newId = uuidv4();
 
-  appendNote(el, url, newId, newId);
+  appendNote(el, url, newId, '');
 
   let stored = (await STORAGE.get(url) || {})[url] || {};
-  STORAGE.set({ [url]: { ...stored, [newId]: newId } });
+  STORAGE.set({ [url]: { ...stored, [newId]: '' } });
 }
 
 async function deleteNote(url, uuid) {
