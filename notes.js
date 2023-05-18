@@ -43,6 +43,7 @@ function appendNote(el, url, uuid, text) {
 
   newContainer.appendChild(newNote);
   newContainer.appendChild(deleteButton);
+  appendAddNoteButton(newContainer, url);
   el.appendChild(newContainer);
 }
 
@@ -50,7 +51,6 @@ async function addNote(el, url) {
   let newId = uuidv4();
 
   appendNote(el, url, newId, newId);
-  appendAddNoteButton(el, url);
 
   let stored = (await STORAGE.get(url) || {})[url] || {};
   STORAGE.set({ [url]: { ...stored, [newId]: newId } });
@@ -82,12 +82,10 @@ async function reload() {
     DOMAIN_NOTES_LBL.innerText = `${domain} notes`;
     let stored = (await STORAGE.get(domain) || {})[domain] || {};
 
+    appendAddNoteButton(DOMAIN_NOTES, domain);
     Object.keys(stored).forEach(k => {
-      appendAddNoteButton(DOMAIN_NOTES, domain);
       appendNote(DOMAIN_NOTES, domain, k, stored[k]);
     });
-
-    appendAddNoteButton(DOMAIN_NOTES, domain);
   }
 
   if (PAGE_NOTES) {
@@ -97,12 +95,10 @@ async function reload() {
     PAGE_NOTES_LBL.innerText = `${pagepath} notes`;
     let stored = (await STORAGE.get(pagepath) || {})[pagepath] || {};
 
+    appendAddNoteButton(PAGE_NOTES, pagepath);
     Object.keys(stored).forEach(k => {
-      appendAddNoteButton(PAGE_NOTES, pagepath);
       appendNote(PAGE_NOTES, pagepath, k, stored[k]);
     });
-
-    appendAddNoteButton(PAGE_NOTES, pagepath);
   }
 }
 
