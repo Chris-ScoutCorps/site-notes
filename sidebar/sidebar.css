@@ -1,5 +1,7 @@
 body {
-  background-color: #7da7d8;
-  color: #ffffff;
+  background-color: white;
+  color: #7da7d8;
   padding: 4px;
+  border-left: 4px solid #7da7d8;
+  height: 100vh;
 }
