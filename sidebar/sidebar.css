@@ -3,12 +3,3 @@ body {
   color: #ffffff;
   padding: 4px;
 }
-
-.note {
-  padding: 2px;
-  border-top: 1px dashed gray;
-}
-
-.note textarea {
-  width: 100%;
-}

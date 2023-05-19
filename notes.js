@@ -13,12 +13,24 @@ function uuidv4() {
 }
 
 function appendAddNoteButton(el, url) {
-  let button = document.createElement('input');
-  button.type = 'button';
-  button.value = '+';
+  let button = document.createElement('a');
   button.addEventListener('click', () => {
     addNote(el, url);
   });
+
+  let divider = document.createElement('div');
+  divider.className = 'note-divider';
+
+  let plus = document.createElement('div');
+  plus.className = 'plus';
+  plus.innerHTML = '+';
+
+  let line = document.createElement('div');
+  line.className = 'line';
+
+  button.appendChild(divider);
+  divider.appendChild(plus);
+  divider.appendChild(line);
   el.appendChild(button);
 }
 
@@ -34,15 +46,17 @@ function appendNote(el, url, uuid, text) {
     updateNote(url, uuid, e.target.value);
   });
 
-  let deleteButton = document.createElement('input');
-  deleteButton.type = 'button';
-  deleteButton.value = '-';
+  let deleteButton = document.createElement('a');
   deleteButton.addEventListener('click', () => {
     deleteNote(url, uuid);
   });
+  let x = document.createElement('div');
+  x.className = 'delete';
+  x.innerHTML = '&#10060;';
+  deleteButton.appendChild(x);
 
-  newContainer.appendChild(newNote);
   newContainer.appendChild(deleteButton);
+  newContainer.appendChild(newNote);
   appendAddNoteButton(newContainer, url);
   el.appendChild(newContainer);
 }
