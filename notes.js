@@ -105,48 +105,28 @@ async function deleteNote(url, uuid) {
 }
 
 async function updateNote(url, uuid, newNote) {
-  let stored = (await STORAGE.get(url) || {})[url] || {};
-  stored[uuid] = newNote;
-  STORAGE.set({ [url]: stored });
+  debounce(`update-${uuid}`, async () => {
+    let stored = (await STORAGE.get(url) || {})[url] || {};
+    stored[uuid] = newNote;
+    STORAGE.set({ [url]: stored });
+  });
 }
 
 async function reload() {
-  let tab = (DOMAIN_NOTES || PAGE_NOTES) && (await TABS.query({ windowId: WINDOW_ID, active: true }))[0];
-  let url = new URL(tab.url);
+  debounce("reload", async () => {
+    let tab = (DOMAIN_NOTES || PAGE_NOTES) && (await TABS.query({ windowId: WINDOW_ID, active: true }))[0];
+    let url = new URL(tab.url);
 
-  let domain = url.hostname ? url.hostname : (url.protocol + url.pathname);
-  let pagepath = url.hostname ? (url.hostname + url.pathname) : url.href;
+    let domain = url.hostname ? url.hostname : (url.protocol + url.pathname);
+    let pagepath = url.hostname ? (url.hostname + url.pathname) : url.href;
 
-  if (DOMAIN_NOTES) {
-    DOMAIN_NOTES.innerHTML = '';
+    if (DOMAIN_NOTES) {
+      DOMAIN_NOTES.innerHTML = '';
 
-    DOMAIN_NOTES_LBL.innerText = `${domain} notes`;
-    let stored = (await STORAGE.get(domain) || {})[domain] || {};
+      DOMAIN_NOTES_LBL.innerText = `${domain} notes`;
+      let stored = (await STORAGE.get(domain) || {})[domain] || {};
 
-    let sortkey = 'sorts|' + domain;
-    let sorts = (await STORAGE.get(sortkey) || {})[sortkey] || [];
-
-    Object.keys(stored).filter(k => !sorts.includes(k)).forEach(k => {
-      sorts.push(k);
-    });
-    STORAGE.set({ [sortkey]: sorts });
-
-    sorts.forEach(k => {
-      appendNote(DOMAIN_NOTES, domain, k, stored[k]);
-    });
-    appendAddNoteButton(DOMAIN_NOTES, domain, null);
-  }
-
-  if (PAGE_NOTES) {
-    PAGE_NOTES.innerHTML = '';
-
-    if (pagepath === domain || pagepath === (domain + '/')) {
-      PAGE_NOTES_LBL.innerText = '';
-    } else {
-      PAGE_NOTES_LBL.innerText = `${pagepath} notes`;
-      let stored = (await STORAGE.get(pagepath) || {})[pagepath] || {};
-
-      let sortkey = 'sorts|' + pagepath;
+      let sortkey = 'sorts|' + domain;
       let sorts = (await STORAGE.get(sortkey) || {})[sortkey] || [];
 
       Object.keys(stored).filter(k => !sorts.includes(k)).forEach(k => {
@@ -155,11 +135,35 @@ async function reload() {
       STORAGE.set({ [sortkey]: sorts });
 
       sorts.forEach(k => {
-        appendNote(PAGE_NOTES, pagepath, k, stored[k]);
+        appendNote(DOMAIN_NOTES, domain, k, stored[k]);
       });
-      appendAddNoteButton(PAGE_NOTES, pagepath, null);
+      appendAddNoteButton(DOMAIN_NOTES, domain, null);
     }
-  }
+
+    if (PAGE_NOTES) {
+      PAGE_NOTES.innerHTML = '';
+
+      if (pagepath === domain || pagepath === (domain + '/')) {
+        PAGE_NOTES_LBL.innerText = '';
+      } else {
+        PAGE_NOTES_LBL.innerText = `${pagepath} notes`;
+        let stored = (await STORAGE.get(pagepath) || {})[pagepath] || {};
+
+        let sortkey = 'sorts|' + pagepath;
+        let sorts = (await STORAGE.get(sortkey) || {})[sortkey] || [];
+
+        Object.keys(stored).filter(k => !sorts.includes(k)).forEach(k => {
+          sorts.push(k);
+        });
+        STORAGE.set({ [sortkey]: sorts });
+
+        sorts.forEach(k => {
+          appendNote(PAGE_NOTES, pagepath, k, stored[k]);
+        });
+        appendAddNoteButton(PAGE_NOTES, pagepath, null);
+      }
+    }
+  });
 }
 
 reload().then(() => {

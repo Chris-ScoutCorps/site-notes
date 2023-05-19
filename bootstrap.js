@@ -24,3 +24,8 @@ browser.windows.getCurrent({ populate: true }).then((windowInfo) => {
   WINDOW_ID = windowInfo.id;
 });
 
+let DEBOUNCES = {};
+function debounce(key, callback, timeout = 100) {
+  clearTimeout(DEBOUNCES[key]);
+  DEBOUNCES[key] = setTimeout(callback, timeout);
+}
