@@ -137,24 +137,28 @@ async function reload() {
     appendAddNoteButton(DOMAIN_NOTES, domain, null);
   }
 
-  if (PAGE_NOTES && pagepath !== domain) {
+  if (PAGE_NOTES) {
     PAGE_NOTES.innerHTML = '';
 
-    PAGE_NOTES_LBL.innerText = `${pagepath} notes`;
-    let stored = (await STORAGE.get(pagepath) || {})[pagepath] || {};
+    if (pagepath === domain || pagepath === (domain + '/')) {
+      PAGE_NOTES_LBL.innerText = '';
+    } else {
+      PAGE_NOTES_LBL.innerText = `${pagepath} notes`;
+      let stored = (await STORAGE.get(pagepath) || {})[pagepath] || {};
 
-    let sortkey = 'sorts|' + pagepath;
-    let sorts = (await STORAGE.get(sortkey) || {})[sortkey] || [];
+      let sortkey = 'sorts|' + pagepath;
+      let sorts = (await STORAGE.get(sortkey) || {})[sortkey] || [];
 
-    Object.keys(stored).filter(k => !sorts.includes(k)).forEach(k => {
-      sorts.push(k);
-    });
-    STORAGE.set({ [sortkey]: sorts });
+      Object.keys(stored).filter(k => !sorts.includes(k)).forEach(k => {
+        sorts.push(k);
+      });
+      STORAGE.set({ [sortkey]: sorts });
 
-    sorts.forEach(k => {
-      appendNote(PAGE_NOTES, pagepath, k, stored[k]);
-    });
-    appendAddNoteButton(PAGE_NOTES, pagepath, null);
+      sorts.forEach(k => {
+        appendNote(PAGE_NOTES, pagepath, k, stored[k]);
+      });
+      appendAddNoteButton(PAGE_NOTES, pagepath, null);
+    }
   }
 }
 
