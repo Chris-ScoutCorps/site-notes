@@ -30,10 +30,10 @@ async function getSearchResults(search) {
       const lsite = site.toLowerCase();
       if (lsite.includes(search)) {
         for (const note of Object.values(stored[site])) {
-          const lnote = note.toLowerCase();
+          const lnote = note.note.toLowerCase();
           results.push({
             site,
-            note,
+            note: note,
             score: 3 + (lsite.startsWith(search) || lsite.startsWith('www.' + search) ? 1 : 0) + (lnote.startsWith(search) ? 2 : lnote.includes(search) ? 1 : 0),
           });
         }
@@ -41,7 +41,7 @@ async function getSearchResults(search) {
         for (const i in stored['sorts|' + site]) {
           const uuid = stored['sorts|' + site][i];
           const note = stored[site][uuid];
-          const lnote = note.toLowerCase();
+          const lnote = note.note.toLowerCase();
           if (lnote.includes(search)) {
             const order = 1 - (i / Object.keys(stored[site]).length);
             results.push({
@@ -101,7 +101,8 @@ SEARCH_TXT.addEventListener('keyup', (e) => {
       lastSite = result.site;
 
       const item = document.createElement('li');
-      item.innerHTML = result.note;
+      item.innerHTML = result.note.note;
+      item.title = `Created ${result.note.created.toLocaleString()} | Updated: ${result.note.updated ? result.note.updated.toLocaleString() : '--'}`;
       list.appendChild(item);
     }
   });

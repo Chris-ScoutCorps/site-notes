@@ -35,14 +35,15 @@ function appendAddNoteButton(el, url, before) {
   el.appendChild(button);
 }
 
-function appendNote(el, url, uuid, text, before) {
+function appendNote(el, url, uuid, note, before) {
   const newContainer = document.createElement('div');
   newContainer.className = 'note';
   newContainer.setAttribute('note-id', uuid);
 
   const newNote = document.createElement('textarea');
   newNote.className = 'note-text';
-  newNote.innerText = text;
+  newNote.innerText = note.note;
+  newNote.title = `Created ${note.created.toLocaleString()} | Updated: ${note.updated ? note.updated.toLocaleString() : '--'}`;
   newNote.addEventListener('keyup', (e) => {
     updateNote(url, uuid, e.target.value);
   });
@@ -75,10 +76,11 @@ function appendNote(el, url, uuid, text, before) {
 async function addNote(el, url, before) {
   const newId = uuidv4();
 
-  appendNote(el, url, newId, '', before ? el.querySelectorAll(`[note-id='${before}']`)[0] : null);
+  const note = { note: '', created: new Date(), updated: null };
+  appendNote(el, url, newId, note, before ? el.querySelectorAll(`[note-id='${before}']`)[0] : null);
 
   const stored = (await STORAGE.get(url) || {})[url] || {};
-  STORAGE.set({ [url]: { ...stored, [newId]: '' } });
+  STORAGE.set({ [url]: { ...stored, [newId]: note } });
 
   const sortkey = 'sorts|' + url;
   const sorts = (await STORAGE.get(sortkey) || {})[sortkey] || [];
@@ -115,7 +117,11 @@ async function deleteNote(url, uuid) {
 async function updateNote(url, uuid, newNote) {
   debounce(`update-${uuid}`, async () => {
     const stored = (await STORAGE.get(url) || {})[url] || {};
-    stored[uuid] = newNote;
+    stored[uuid] = {
+      ...stored[uuid],
+      note: newNote,
+      updated: new Date(),
+    };
     STORAGE.set({ [url]: stored });
   });
 }
