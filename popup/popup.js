@@ -9,7 +9,7 @@ if (IS_CHROME) {
   document.getElementById(SIDEBAR_TOGGLE_ID).style.display = 'block';
 
   document.getElementById(SIDEBAR_TOGGLE_ID).addEventListener("click", async () => {
-    let isOpen = ((await STORAGE.get(SIDEBAR_OPEN)) || {})[SIDEBAR_OPEN] === true;
+    const isOpen = ((await STORAGE.get(SIDEBAR_OPEN)) || {})[SIDEBAR_OPEN] === true;
     await STORAGE.set({
       [SIDEBAR_OPEN]: !isOpen,
     });

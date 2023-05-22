@@ -22,13 +22,13 @@ async function getSearchResults(search) {
   //await clean();
 
   let more = false;
-  let results = [];
-  let stored = await STORAGE.get();
+  const results = [];
+  const stored = await STORAGE.get();
 
-  for (let site of Object.keys(stored)) {
+  for (const site of Object.keys(stored)) {
     if (!site.startsWith('sorts|')) {
       if (site.toLowerCase().includes(search)) {
-        for (let note of Object.values(stored[site])) {
+        for (const note of Object.values(stored[site])) {
           results.push({
             site,
             note,
@@ -36,11 +36,11 @@ async function getSearchResults(search) {
           });
         }
       } else {
-        for (let i in stored['sorts|' + site]) {
-          let uuid = stored['sorts|' + site][i];
-          let note = stored[site][uuid];
+        for (const i in stored['sorts|' + site]) {
+          const uuid = stored['sorts|' + site][i];
+          const note = stored[site][uuid];
           if (note.includes(search)) {
-            let order = 1 - (i / Object.keys(stored[site]).length);
+            const order = 1 - (i / Object.keys(stored[site]).length);
             results.push({
               site,
               note,
@@ -56,7 +56,6 @@ async function getSearchResults(search) {
       }
     }
   }
-
 
   if (results.length > MAX_RESULTS) {
     more = true;

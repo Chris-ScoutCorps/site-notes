@@ -1,12 +1,12 @@
 'use strict';
 
-let IS_CHROME = (() => {
-  var isChromium = window.chrome;
-  var winNav = window.navigator;
-  var vendorName = winNav.vendor;
-  var isOpera = typeof window.opr !== "undefined";
-  var isIEedge = winNav.userAgent.indexOf("Edg") > -1;
-  var isIOSChrome = winNav.userAgent.match("CriOS");
+const IS_CHROME = (() => {
+  const isChromium = window.chrome;
+  const winNav = window.navigator;
+  const vendorName = winNav.vendor;
+  const isOpera = typeof window.opr !== "undefined";
+  const isIEedge = winNav.userAgent.indexOf("Edg") > -1;
+  const isIOSChrome = winNav.userAgent.match("CriOS");
 
   return isIOSChrome || (
     isChromium !== null &&
@@ -16,15 +16,15 @@ let IS_CHROME = (() => {
     isIEedge === false);
 })();
 
-let STORAGE = IS_CHROME ? chrome.storage.local : browser.storage.local;
-let TABS = IS_CHROME ? chrome.tabs : browser.tabs;
+const STORAGE = IS_CHROME ? chrome.storage.local : browser.storage.local;
+const TABS = IS_CHROME ? chrome.tabs : browser.tabs;
 
 let WINDOW_ID;
 browser.windows.getCurrent({ populate: true }).then((windowInfo) => {
   WINDOW_ID = windowInfo.id;
 });
 
-let DEBOUNCES = {};
+const DEBOUNCES = {};
 function debounce(key, callback, timeout = 250) {
   clearTimeout(DEBOUNCES[key]);
   DEBOUNCES[key] = setTimeout(callback, timeout);
