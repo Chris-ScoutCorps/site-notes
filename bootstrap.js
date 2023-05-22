@@ -25,7 +25,7 @@ browser.windows.getCurrent({ populate: true }).then((windowInfo) => {
 });
 
 let DEBOUNCES = {};
-function debounce(key, callback, timeout = 100) {
+function debounce(key, callback, timeout = 250) {
   clearTimeout(DEBOUNCES[key]);
   DEBOUNCES[key] = setTimeout(callback, timeout);
 }
