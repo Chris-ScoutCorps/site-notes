@@ -67,12 +67,27 @@ async function getSearchResults(search) {
   return results;
 }
 
-document.getElementById('search-txt').value = '';
+const SEARCH_TXT = document.getElementById('search-txt');
+const SEARCH_RESULTS = document.getElementById('search-results');
 
-document.getElementById('search-txt').addEventListener('keyup', (e) => {
+SEARCH_TXT.value = '';
+SEARCH_TXT.addEventListener('keyup', (e) => {
   debounce("search", async () => {
     const search = e.target.value.toLowerCase();
     const results = await getSearchResults(search);
+
+    if (search && !results.length) {
+      SEARCH_RESULTS.innerHTML = `No results for "${search}"`;
+    } else {
+      SEARCH_RESULTS.innerHTML = '';
+    }
+
+    for (const result of results) {
+      const node = document.createElement('div');
+      node.innerHTML = result.site + ' &gt; ' + result.note;
+      SEARCH_RESULTS.appendChild(node);
+    }
+
     //alert(JSON.stringify(results));
   });
 });
