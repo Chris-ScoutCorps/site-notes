@@ -22,7 +22,7 @@ async function getSearchResults(search) {
   //await clean();
 
   let more = false;
-  const results = [];
+  let results = [];
   const stored = await STORAGE.get();
 
   for (const site of Object.keys(stored)) {
@@ -50,7 +50,7 @@ async function getSearchResults(search) {
         }
       }
 
-      if (results.length > MAX_RESULTS && search.length >= 3) {
+      if (results.length > MAX_RESULTS && search.length <= 3) {
         more = true;
         break;
       }
