@@ -82,12 +82,21 @@ SEARCH_TXT.addEventListener('keyup', (e) => {
       SEARCH_RESULTS.innerHTML = '';
     }
 
+    let lastSite = null;
+    let list = null;
     for (const result of results) {
-      const node = document.createElement('div');
-      node.innerHTML = result.site + ' &gt; ' + result.note;
-      SEARCH_RESULTS.appendChild(node);
-    }
+      if (lastSite !== result.site) {
+        const header = document.createElement('h4');
+        header.innerHTML = result.site;
+        list = document.createElement('ul');
+        SEARCH_RESULTS.appendChild(header);
+        SEARCH_RESULTS.appendChild(list);
+      }
+      lastSite = result.site;
 
-    //alert(JSON.stringify(results));
+      const item = document.createElement('li');
+      item.innerHTML = result.note;
+      list.appendChild(item);
+    }
   });
 });

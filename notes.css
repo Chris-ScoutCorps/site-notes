@@ -48,3 +48,14 @@
   color: red;
   cursor: pointer;
 }
+
+#search-results h4 {
+  margin-top: 4px;
+  margin-bottom: 0px;
+}
+#search-results ul {
+  margin: 0px;
+}
+#search-results li {
+  color: black;
+}
