@@ -44,7 +44,8 @@ function appendNote(el, url, uuid, note, before) {
   newNote.className = 'note-text';
   newNote.value = note.note;
   newNote.cols = 60;
-  newNote.rows = (note.note.length / 60) + note.note.split('\n').length;
+  const lines = note.note.split('\n');
+  newNote.rows = lines.reduce((acc, cur) => acc + Math.trunc(cur.length / 60) + 1, 1);
   newNote.title = `Created ${note.created} | Updated: ${note.updated || '--'}`;
   newNote.addEventListener('keyup', (e) => {
     updateNote(url, uuid, e.target.value);
