@@ -49,6 +49,9 @@
   cursor: pointer;
 }
 
+#search-results a:visited {
+  color: #7da7d8;
+}
 #search-results h4 {
   margin-top: 4px;
   margin-bottom: 0px;

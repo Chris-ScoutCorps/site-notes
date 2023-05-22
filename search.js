@@ -86,10 +86,13 @@ SEARCH_TXT.addEventListener('keyup', (e) => {
     let list = null;
     for (const result of results) {
       if (lastSite !== result.site) {
+        const link = document.createElement('a');
+        link.href = 'http://' + result.site;
         const header = document.createElement('h4');
         header.innerHTML = result.site;
         list = document.createElement('ul');
-        SEARCH_RESULTS.appendChild(header);
+        link.appendChild(header);
+        SEARCH_RESULTS.appendChild(link);
         SEARCH_RESULTS.appendChild(list);
       }
       lastSite = result.site;
