@@ -43,7 +43,7 @@ function appendNote(el, url, uuid, note, before) {
   const newNote = document.createElement('textarea');
   newNote.className = 'note-text';
   newNote.innerText = note.note;
-  newNote.title = `Created ${note.created.toLocaleString()} | Updated: ${note.updated ? note.updated.toLocaleString() : '--'}`;
+  newNote.title = `Created ${note.created} | Updated: ${note.updated || '--'}`;
   newNote.addEventListener('keyup', (e) => {
     updateNote(url, uuid, e.target.value);
   });
@@ -76,7 +76,7 @@ function appendNote(el, url, uuid, note, before) {
 async function addNote(el, url, before) {
   const newId = uuidv4();
 
-  const note = { note: '', created: new Date(), updated: null };
+  const note = { note: '', created: (new Date().toLocaleString()), updated: null };
   appendNote(el, url, newId, note, before ? el.querySelectorAll(`[note-id='${before}']`)[0] : null);
 
   const stored = (await STORAGE.get(url) || {})[url] || {};
@@ -120,7 +120,7 @@ async function updateNote(url, uuid, newNote) {
     stored[uuid] = {
       ...stored[uuid],
       note: newNote,
-      updated: new Date(),
+      updated: (new Date().toLocaleString()),
     };
     STORAGE.set({ [url]: stored });
   });

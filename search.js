@@ -103,7 +103,7 @@ SEARCH_TXT.addEventListener('keyup', (e) => {
 
       const item = document.createElement('li');
       item.innerHTML = result.note.note;
-      item.title = `Created ${result.note.created.toLocaleString()} | Updated: ${result.note.updated ? result.note.updated.toLocaleString() : '--'}`;
+      item.title = `Created ${result.note.created} | Updated: ${result.note.updated || '--'}`;
       list.appendChild(item);
     }
   });
