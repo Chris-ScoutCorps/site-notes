@@ -97,11 +97,19 @@ async function deleteNote(url, uuid) {
 
   let stored = (await STORAGE.get(url) || {})[url] || {};
   delete stored[uuid];
-  STORAGE.set({ [url]: stored });
+  if (Object.keys(stored).length) {
+    STORAGE.set({ [url]: stored });
+  } else {
+    STORAGE.remove(url);
+  }
 
   let sortkey = 'sorts|' + url;
-  let sorts = (await STORAGE.get(sortkey) || {})[sortkey] || [];
-  STORAGE.set({ [sortkey]: sorts.filter(x => x !== uuid) });
+  let sorts = ((await STORAGE.get(sortkey) || {})[sortkey] || []).filter(x => x !== uuid);
+  if (sorts.length) {
+    STORAGE.set({ [sortkey]: sorts });
+  } else {
+    STORAGE.remove(sortkey);
+  }
 }
 
 async function updateNote(url, uuid, newNote) {
