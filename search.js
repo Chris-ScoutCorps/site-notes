@@ -27,24 +27,27 @@ async function getSearchResults(search) {
 
   for (const site of Object.keys(stored)) {
     if (!site.startsWith('sorts|')) {
-      if (site.toLowerCase().includes(search)) {
+      const lsite = site.toLowerCase();
+      if (lsite.includes(search)) {
         for (const note of Object.values(stored[site])) {
+          const lnote = note.toLowerCase();
           results.push({
             site,
             note,
-            score: 3 + (site.toLowerCase().startsWith(search) ? 1 : 0) + (note.startsWith(search) ? 2 : note.includes(search) ? 1 : 0),
+            score: 3 + (lsite.startsWith(search) || lsite.startsWith('www.' + search) ? 1 : 0) + (lnote.startsWith(search) ? 2 : lnote.includes(search) ? 1 : 0),
           });
         }
       } else {
         for (const i in stored['sorts|' + site]) {
           const uuid = stored['sorts|' + site][i];
           const note = stored[site][uuid];
-          if (note.includes(search)) {
+          const lnote = note.toLowerCase();
+          if (lnote.includes(search)) {
             const order = 1 - (i / Object.keys(stored[site]).length);
             results.push({
               site,
               note,
-              score: (note.startsWith(search) ? 2 : note.includes(search) ? 1 : 0) + order,
+              score: (lnote.startsWith(search) ? 2 : lnote.includes(search) ? 1 : 0) + order,
             });
           }
         }
