@@ -42,7 +42,9 @@ function appendNote(el, url, uuid, note, before) {
 
   const newNote = document.createElement('textarea');
   newNote.className = 'note-text';
-  newNote.innerText = note.note;
+  newNote.value = note.note;
+  newNote.cols = 60;
+  newNote.rows = (note.note.length / 60) + note.note.split('\n').length;
   newNote.title = `Created ${note.created} | Updated: ${note.updated || '--'}`;
   newNote.addEventListener('keyup', (e) => {
     updateNote(url, uuid, e.target.value);
