@@ -18,9 +18,10 @@ const IS_CHROME = (() => {
 
 const STORAGE = IS_CHROME ? chrome.storage.local : browser.storage.local;
 const TABS = IS_CHROME ? chrome.tabs : browser.tabs;
+const WINDOWS = IS_CHROME ? chrome.windows : browser.windows;
 
 let WINDOW_ID;
-browser.windows.getCurrent({ populate: true }).then((windowInfo) => {
+WINDOWS.getCurrent({ populate: true }).then((windowInfo) => {
   WINDOW_ID = windowInfo.id;
 });
 

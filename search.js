@@ -90,6 +90,7 @@ SEARCH_TXT.addEventListener('keyup', (e) => {
     for (const result of results) {
       if (lastSite !== result.site) {
         const link = document.createElement('a');
+        link.target = '_blank';
         link.href = 'http://' + result.site;
         const header = document.createElement('h4');
         header.innerHTML = result.site;
