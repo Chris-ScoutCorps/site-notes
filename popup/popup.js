@@ -6,12 +6,19 @@ const SIDEBAR_OPEN = 'site-notes-sidebar-open';
 const SIDEBAR_TOGGLE_ID = 'sidebar-toggle-button';
 
 if (IS_CHROME) {
-  document.getElementById(SIDEBAR_TOGGLE_ID).style.display = 'block';
+  async function setupSidebarButton() {
+    const isOpen = async () => ((await STORAGE.get(SIDEBAR_OPEN)) || {})[SIDEBAR_OPEN] === true;
 
-  document.getElementById(SIDEBAR_TOGGLE_ID).addEventListener("click", async () => {
-    const isOpen = ((await STORAGE.get(SIDEBAR_OPEN)) || {})[SIDEBAR_OPEN] === true;
-    await STORAGE.set({
-      [SIDEBAR_OPEN]: !isOpen,
+    const SIDEBAR_BUTTON = document.getElementById(SIDEBAR_TOGGLE_ID);
+    SIDEBAR_BUTTON.style.display = 'block';
+    SIDEBAR_BUTTON.value = `sidebar ${(await isOpen()) ? ' <' : ' >'}`
+
+    SIDEBAR_BUTTON.addEventListener("click", async () => {
+      await STORAGE.set({
+        [SIDEBAR_OPEN]: !(await isOpen()),
+      });
+      SIDEBAR_BUTTON.value = `sidebar ${(await isOpen()) ? ' <' : ' >'}`
     });
-  });
+  }
+  setupSidebarButton();
 }
