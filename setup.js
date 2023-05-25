@@ -52,7 +52,7 @@ SiteNotes.debounce = (key, callback, timeout = 250) => {
     const frame = document.createElement('div');
     frame.id = 'site-notes-body';
     frame.className = 'sidebar';
-    frame.style.width = '250px';
+    frame.style.width = '300px';
     frame.style.top = '0px';
     frame.style.right = '0px';
     frame.style.position = 'fixed';
@@ -72,6 +72,9 @@ SiteNotes.debounce = (key, callback, timeout = 250) => {
       #site-notes-body .delete {
         padding-left: 4px;
         padding-top: 4px;
+      }
+      #site-notes-body #search-results ul {
+        margin-left: 25px;
       }`;
     document.head.appendChild(stylesheet);
   }
@@ -87,10 +90,13 @@ SiteNotes.debounce = (key, callback, timeout = 250) => {
 
   if (document.getElementById('site-notes-body')) {
     document.getElementById('site-notes-body').innerHTML = `
-    <input type="button" value="sidebar" id="sidebar-toggle-button" style="display: none;" />
-
     <div id="search-area" style="width: 100%; margin-top: 0;">
-      <input type="text" id="search-txt" style="width: 100%;" placeholder="search ..." />
+      <div style="display: flex; align-items: center; justify-content: space-between;">
+        <div style="flex: 1;">
+          <input type="text" id="search-txt" style="width: 100%;" placeholder="search ..." />
+        </div>
+        <input type="button" value="sidebar" id="sidebar-toggle-button" style="display: none; margin-left: 10px;" />
+      </div>
       <div id="search-results" style="width: 100%;"></div>
     </div>
 
