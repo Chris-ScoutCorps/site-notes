@@ -22,7 +22,6 @@
     {
       "matches": [ "http://*/*", "https://*/*" ],
       "js": [
-        "setup-chrome.js",
         "setup.js",
         "notes.js",
         "search.js"
