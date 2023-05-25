@@ -12,7 +12,7 @@ async function clean() {
   }
 }
 
-const MAX_RESULTS = 10;
+const MAX_RESULTS = 100;
 
 async function getSearchResults(search) {
   if (!search) {
@@ -28,11 +28,13 @@ async function getSearchResults(search) {
   for (const site of Object.keys(stored)) {
     if (!site.startsWith('sorts|')) {
       const lsite = site.toLowerCase();
-      if (lsite.includes(search)) {
+      if (lsite.includes(search) || (stored[site]['title'] || '').toLowerCase().includes(search)) {
         for (const note of Object.values(stored[site])) {
+          if (!note.note) { continue; }
           const lnote = note.note.toLowerCase();
           results.push({
             site,
+            title: stored[site]['title'],
             note: note,
             score: 3 + (lsite.startsWith(search) || lsite.startsWith('www.' + search) ? 1 : 0) + (lnote.startsWith(search) ? 2 : lnote.includes(search) ? 1 : 0),
           });
@@ -41,11 +43,13 @@ async function getSearchResults(search) {
         for (const i in stored['sorts|' + site]) {
           const uuid = stored['sorts|' + site][i];
           const note = stored[site][uuid];
+          if (!note.note) { continue; }
           const lnote = note.note.toLowerCase();
           if (lnote.includes(search)) {
             const order = 1 - (i / Object.keys(stored[site]).length);
             results.push({
               site,
+              title: stored[site]['title'],
               note,
               score: (lnote.startsWith(search) ? 2 : lnote.includes(search) ? 1 : 0) + order,
             });
@@ -96,7 +100,10 @@ SEARCH_TXT.addEventListener('keyup', (e) => {
         header.innerHTML = result.site;
         list = document.createElement('ul');
         link.appendChild(header);
+        const title = document.createElement('i');
+        title.innerHTML = result.title;
         SEARCH_RESULTS.appendChild(link);
+        SEARCH_RESULTS.appendChild(title);
         SEARCH_RESULTS.appendChild(list);
       }
       lastSite = result.site;

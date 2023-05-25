@@ -6,6 +6,8 @@ const DOMAIN_NOTES = document.getElementById('domain-notes');
 const PAGE_NOTES_LBL = document.getElementById('page-notes-lbl');
 const PAGE_NOTES = document.getElementById('page-notes');
 
+const NON_UUID_KEYS = ['title', 'title-url'];
+
 function uuidv4() {
   return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
     (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
@@ -76,6 +78,18 @@ function appendNote(el, url, uuid, note, before) {
   }
 }
 
+async function updateTitle(stored) {
+  const tab = (await TABS.query({ windowId: WINDOW_ID, active: true }))[0];
+  if (!stored['title'] || tab.url.length < stored['title-url'].length) {
+    return {
+      ...stored,
+      'title': tab.title,
+      'title-url': tab.url,
+    };
+  }
+  return stored;
+}
+
 async function addNote(el, url, before) {
   const newId = uuidv4();
 
@@ -83,7 +97,7 @@ async function addNote(el, url, before) {
   appendNote(el, url, newId, note, before ? el.querySelectorAll(`[note-id='${before}']`)[0] : null);
 
   const stored = (await STORAGE.get(url) || {})[url] || {};
-  STORAGE.set({ [url]: { ...stored, [newId]: note } });
+  STORAGE.set({ [url]: { ...(await updateTitle(stored)), [newId]: note } });
 
   const sortkey = 'sorts|' + url;
   const sorts = (await STORAGE.get(sortkey) || {})[sortkey] || [];
@@ -102,10 +116,11 @@ async function deleteNote(url, uuid) {
 
   const stored = (await STORAGE.get(url) || {})[url] || {};
   delete stored[uuid];
-  if (Object.keys(stored).length) {
-    STORAGE.set({ [url]: stored });
-  } else {
+  const keys = Object.keys(stored);
+  if (keys.length <= NON_UUID_KEYS.length && !keys.filter(k => !NON_UUID_KEYS.includes(k)).length) {
     STORAGE.remove(url);
+  } else {
+    STORAGE.set({ [url]: stored });
   }
 
   const sortkey = 'sorts|' + url;
@@ -125,7 +140,7 @@ async function updateNote(url, uuid, newNote) {
       note: newNote,
       updated: (new Date().toLocaleString()),
     };
-    STORAGE.set({ [url]: stored });
+    STORAGE.set({ [url]: await updateTitle(stored) });
   });
 }
 
@@ -140,13 +155,13 @@ async function reload() {
     if (DOMAIN_NOTES) {
       DOMAIN_NOTES.innerHTML = '';
 
-      DOMAIN_NOTES_LBL.innerText = `${domain} notes`;
+      DOMAIN_NOTES_LBL.innerText = domain;
       const stored = (await STORAGE.get(domain) || {})[domain] || {};
 
       const sortkey = 'sorts|' + domain;
       const sorts = (await STORAGE.get(sortkey) || {})[sortkey] || [];
 
-      Object.keys(stored).filter(k => !sorts.includes(k)).forEach(k => {
+      Object.keys(stored).filter(k => !NON_UUID_KEYS.includes(k) && !sorts.includes(k)).forEach(k => {
         sorts.push(k);
       });
       STORAGE.set({ [sortkey]: sorts });
@@ -155,6 +170,13 @@ async function reload() {
         appendNote(DOMAIN_NOTES, domain, k, stored[k]);
       });
       appendAddNoteButton(DOMAIN_NOTES, domain, null);
+
+      if (stored['title']) {
+        let title = document.createElement('i');
+        title.innerHTML = stored['title'];
+        DOMAIN_NOTES_LBL.appendChild(document.createElement('br'));
+        DOMAIN_NOTES_LBL.appendChild(title);
+      }
     }
 
     if (PAGE_NOTES) {
@@ -163,13 +185,13 @@ async function reload() {
       if (pagepath === domain || pagepath === (domain + '/')) {
         PAGE_NOTES_LBL.innerText = '';
       } else {
-        PAGE_NOTES_LBL.innerText = `${pagepath} notes`;
+        PAGE_NOTES_LBL.innerText = pagepath.replace(domain, '');
         const stored = (await STORAGE.get(pagepath) || {})[pagepath] || {};
 
         const sortkey = 'sorts|' + pagepath;
         const sorts = (await STORAGE.get(sortkey) || {})[sortkey] || [];
 
-        Object.keys(stored).filter(k => !sorts.includes(k)).forEach(k => {
+        Object.keys(stored).filter(k => !NON_UUID_KEYS.includes(k) && !sorts.includes(k)).forEach(k => {
           sorts.push(k);
         });
         STORAGE.set({ [sortkey]: sorts });
@@ -178,6 +200,13 @@ async function reload() {
           appendNote(PAGE_NOTES, pagepath, k, stored[k]);
         });
         appendAddNoteButton(PAGE_NOTES, pagepath, null);
+
+        if (stored['title']) {
+          let title = document.createElement('i');
+          title.innerHTML = stored['title'];
+          PAGE_NOTES_LBL.appendChild(document.createElement('br'));
+          PAGE_NOTES_LBL.appendChild(title);
+        }
       }
     }
   });
