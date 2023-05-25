@@ -59,6 +59,30 @@ SiteNotes.debounce = (key, callback, timeout = 250) => {
     frame.style.display = 'none';
     frame.style.zIndex = 9999999;
     document.body.appendChild(frame);
+
+    const stylesheet = document.createElement('style');
+    stylesheet.innerText = `
+      #site-notes-body .plus {
+        padding-left: 4px;
+        padding-top: 5px;
+      }
+      #site-notes-body .delete-a {
+        display: block;
+      }
+      #site-notes-body .delete {
+        padding-left: 4px;
+        padding-top: 4px;
+      }`;
+    document.head.appendChild(stylesheet);
+  }
+
+  if (SiteNotes.IS_CHROME && isPopup) {
+    const stylesheet = document.createElement('style');
+    stylesheet.innerText = `
+      #site-notes-body .delete-a {
+        display: block;
+      }`;
+    document.head.appendChild(stylesheet);
   }
 
   if (document.getElementById('site-notes-body')) {

@@ -55,6 +55,7 @@ SiteNotes.initNotes = function () {
     });
 
     const deleteButton = document.createElement('a');
+    deleteButton.className = 'delete-a';
     deleteButton.addEventListener('click', () => {
       deleteNote(url, uuid);
     });
