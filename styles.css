@@ -76,6 +76,9 @@
   cursor: pointer;
 }
 
+#site-notes-body #search-results a {
+  color: #7da7d8;
+}
 #site-notes-body #search-results a:visited {
   color: #7da7d8;
 }
