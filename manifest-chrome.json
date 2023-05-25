@@ -23,7 +23,9 @@
       "matches": [ "http://*/*", "https://*/*" ],
       "js": [
         "bootstrap.js",
-        "chrome-sidebar.js"
+        "chrome-sidebar.js",
+        "notes.js",
+        "search.js"
       ]
     }
   ]
