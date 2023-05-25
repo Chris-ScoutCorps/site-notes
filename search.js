@@ -92,7 +92,7 @@
 
       let lastSite = null;
       let list = null;
-      for (const result of results) {
+      for (const result of (results || [])) {
         if (lastSite !== result.site) {
           const link = document.createElement('a');
           link.target = '_blank';
