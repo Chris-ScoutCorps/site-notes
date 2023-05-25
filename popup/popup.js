@@ -11,13 +11,13 @@ if (IS_CHROME) {
 
     const SIDEBAR_BUTTON = document.getElementById(SIDEBAR_TOGGLE_ID);
     SIDEBAR_BUTTON.style.display = 'block';
-    SIDEBAR_BUTTON.value = `sidebar ${(await isOpen()) ? ' <' : ' >'}`
+    SIDEBAR_BUTTON.value = `sidebar ${(await isOpen()) ? ' >' : ' <'}`
 
     SIDEBAR_BUTTON.addEventListener("click", async () => {
       await STORAGE.set({
         [SIDEBAR_OPEN]: !(await isOpen()),
       });
-      SIDEBAR_BUTTON.value = `sidebar ${(await isOpen()) ? ' <' : ' >'}`
+      SIDEBAR_BUTTON.value = `sidebar ${(await isOpen()) ? ' >' : ' <'}`
     });
   }
   setupSidebarButton();

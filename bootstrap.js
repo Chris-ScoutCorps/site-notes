@@ -21,9 +21,11 @@ const TABS = IS_CHROME ? chrome.tabs : browser.tabs;
 const WINDOWS = IS_CHROME ? chrome.windows : browser.windows;
 
 let WINDOW_ID;
-WINDOWS.getCurrent({ populate: true }).then((windowInfo) => {
-  WINDOW_ID = windowInfo.id;
-});
+if (WINDOWS) {
+  WINDOWS.getCurrent({ populate: true }).then((windowInfo) => {
+    WINDOW_ID = windowInfo.id;
+  });
+}
 
 const DEBOUNCES = {};
 function debounce(key, callback, timeout = 250) {

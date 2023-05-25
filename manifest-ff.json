@@ -16,15 +16,11 @@
     "default_popup": "popup/popup.html"
   },
 
-  "permissions": [ "storage", "tabs" ],
+  "sidebar_action": {
+    "default_icon": "icon.png",
+    "default_title": "Site Notes",
+    "default_panel": "sidebar/sidebar.html"
+  },
 
-  "content_scripts": [
-    {
-      "matches": [ "http://*/*", "https://*/*" ],
-      "js": [
-        "bootstrap.js",
-        "chrome-sidebar.js"
-      ]
-    }
-  ]
+  "permissions": [ "storage", "tabs" ]
 }
