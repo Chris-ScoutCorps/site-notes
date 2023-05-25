@@ -1,27 +1,13 @@
 <!doctype html>
 <html>
 <head>
-  <title>Site Notes Popup</title>
-  <link rel="stylesheet" type="text/css" href="../notes.css" />
-  <link rel="stylesheet" type="text/css" href="popup.css" />
+  <title>Site Notes</title>
+  <link rel="stylesheet" type="text/css" href="../styles.css" />
 </head>
 <body>
+  <div id="site-notes-body" class="popup"></div>
 
-  <input type="button" value="sidebar" id="sidebar-toggle-button" style="display: none;" />
-
-  <div id="search-area" style="width: 100%; margin-top: 0;">
-    <input type="text" id="search-txt" style="width: 100%;" placeholder="search ..." />
-    <div id="search-results" style="width: 100%;"></div>
-  </div>
-
-  <h4 id="domain-notes-lbl" style="width: 100%; margin-top: 0;"></h4>
-  <div id="domain-notes" style="width: 100%;"></div>
-
-  <h4 id="page-notes-lbl" style="width: 100%;"></h4>
-  <div id="page-notes" style="width: 100%;"></div>
-
-  <script src="../bootstrap.js"></script>
-  <script src="popup.js"></script>
+  <script src="../setup.js"></script>
   <script src="../notes.js"></script>
   <script src="../search.js"></script>
 </body>

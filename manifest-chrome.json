@@ -22,8 +22,8 @@
     {
       "matches": [ "http://*/*", "https://*/*" ],
       "js": [
-        "bootstrap.js",
-        "chrome-sidebar.js",
+        "setup-chrome.js",
+        "setup.js",
         "notes.js",
         "search.js"
       ]

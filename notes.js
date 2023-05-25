@@ -79,7 +79,7 @@ function appendNote(el, url, uuid, note, before) {
 }
 
 async function updateTitle(stored) {
-  const tab = (await TABS.query({ windowId: WINDOW_ID, active: true }))[0];
+  const tab = (await SiteNotes.TABS.query({ windowId: SiteNotes.WINDOW_ID, active: true }))[0];
   if (!stored['title'] || tab.url.length < stored['title-url'].length) {
     return {
       ...stored,
@@ -96,57 +96,57 @@ async function addNote(el, url, before) {
   const note = { note: '', created: (new Date().toLocaleString()), updated: null };
   appendNote(el, url, newId, note, before ? el.querySelectorAll(`[note-id='${before}']`)[0] : null);
 
-  const stored = (await STORAGE.get(url) || {})[url] || {};
-  STORAGE.set({ [url]: { ...(await updateTitle(stored)), [newId]: note } });
+  const stored = (await SiteNotes.STORAGE.get(url) || {})[url] || {};
+  SiteNotes.STORAGE.set({ [url]: { ...(await updateTitle(stored)), [newId]: note } });
 
   const sortkey = 'sorts|' + url;
-  const sorts = (await STORAGE.get(sortkey) || {})[sortkey] || [];
+  const sorts = (await SiteNotes.STORAGE.get(sortkey) || {})[sortkey] || [];
   const found = sorts.indexOf(before);
   if (found !== -1) {
     sorts.splice(found, 0, newId);
   } else {
     sorts.push(newId);
   }
-  STORAGE.set({ [sortkey]: sorts });
+  SiteNotes.STORAGE.set({ [sortkey]: sorts });
 }
 
 async function deleteNote(url, uuid) {
   const nodes = document.querySelectorAll(`[note-id="${uuid}"]`);
   nodes.forEach(n => n.remove());
 
-  const stored = (await STORAGE.get(url) || {})[url] || {};
+  const stored = (await SiteNotes.STORAGE.get(url) || {})[url] || {};
   delete stored[uuid];
   const keys = Object.keys(stored);
   if (keys.length <= NON_UUID_KEYS.length && !keys.filter(k => !NON_UUID_KEYS.includes(k)).length) {
-    STORAGE.remove(url);
+    SiteNotes.STORAGE.remove(url);
   } else {
-    STORAGE.set({ [url]: stored });
+    SiteNotes.STORAGE.set({ [url]: stored });
   }
 
   const sortkey = 'sorts|' + url;
-  const sorts = ((await STORAGE.get(sortkey) || {})[sortkey] || []).filter(x => x !== uuid);
+  const sorts = ((await SiteNotes.STORAGE.get(sortkey) || {})[sortkey] || []).filter(x => x !== uuid);
   if (sorts.length) {
-    STORAGE.set({ [sortkey]: sorts });
+    SiteNotes.STORAGE.set({ [sortkey]: sorts });
   } else {
-    STORAGE.remove(sortkey);
+    SiteNotes.STORAGE.remove(sortkey);
   }
 }
 
 async function updateNote(url, uuid, newNote) {
-  debounce(`update-${uuid}`, async () => {
-    const stored = (await STORAGE.get(url) || {})[url] || {};
+  SiteNotes.debounce(`update-${uuid}`, async () => {
+    const stored = (await SiteNotes.STORAGE.get(url) || {})[url] || {};
     stored[uuid] = {
       ...stored[uuid],
       note: newNote,
       updated: (new Date().toLocaleString()),
     };
-    STORAGE.set({ [url]: await updateTitle(stored) });
+    SiteNotes.STORAGE.set({ [url]: await updateTitle(stored) });
   });
 }
 
 async function reload() {
-  debounce("reload", async () => {
-    const tab = (DOMAIN_NOTES || PAGE_NOTES) && (await TABS.query({ windowId: WINDOW_ID, active: true }))[0];
+  SiteNotes.debounce("reload", async () => {
+    const tab = (DOMAIN_NOTES || PAGE_NOTES) && (await SiteNotes.TABS.query({ windowId: SiteNotes.WINDOW_ID, active: true }))[0];
     const url = new URL(tab.url);
 
     const domain = url.hostname ? url.hostname : (url.protocol + url.pathname);
@@ -156,15 +156,15 @@ async function reload() {
       DOMAIN_NOTES.innerHTML = '';
 
       DOMAIN_NOTES_LBL.innerText = domain;
-      const stored = (await STORAGE.get(domain) || {})[domain] || {};
+      const stored = (await SiteNotes.STORAGE.get(domain) || {})[domain] || {};
 
       const sortkey = 'sorts|' + domain;
-      const sorts = (await STORAGE.get(sortkey) || {})[sortkey] || [];
+      const sorts = (await SiteNotes.STORAGE.get(sortkey) || {})[sortkey] || [];
 
       Object.keys(stored).filter(k => !NON_UUID_KEYS.includes(k) && !sorts.includes(k)).forEach(k => {
         sorts.push(k);
       });
-      STORAGE.set({ [sortkey]: sorts });
+      SiteNotes.STORAGE.set({ [sortkey]: sorts });
 
       sorts.forEach(k => {
         appendNote(DOMAIN_NOTES, domain, k, stored[k]);
@@ -186,15 +186,15 @@ async function reload() {
         PAGE_NOTES_LBL.innerText = '';
       } else {
         PAGE_NOTES_LBL.innerText = pagepath.replace(domain, '');
-        const stored = (await STORAGE.get(pagepath) || {})[pagepath] || {};
+        const stored = (await SiteNotes.STORAGE.get(pagepath) || {})[pagepath] || {};
 
         const sortkey = 'sorts|' + pagepath;
-        const sorts = (await STORAGE.get(sortkey) || {})[sortkey] || [];
+        const sorts = (await SiteNotes.STORAGE.get(sortkey) || {})[sortkey] || [];
 
         Object.keys(stored).filter(k => !NON_UUID_KEYS.includes(k) && !sorts.includes(k)).forEach(k => {
           sorts.push(k);
         });
-        STORAGE.set({ [sortkey]: sorts });
+        SiteNotes.STORAGE.set({ [sortkey]: sorts });
 
         sorts.forEach(k => {
           appendNote(PAGE_NOTES, pagepath, k, stored[k]);
@@ -213,8 +213,8 @@ async function reload() {
 }
 
 reload().then(() => {
-  TABS.onActivated.addListener(reload);
-  TABS.onUpdated.addListener((_, update) => {
+  SiteNotes.TABS.onActivated.addListener(reload);
+  SiteNotes.TABS.onUpdated.addListener((_, update) => {
     if (update.url) {
       reload();
     }

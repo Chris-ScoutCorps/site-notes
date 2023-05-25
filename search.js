@@ -1,13 +1,13 @@
 'use strict';
 
 async function clean() {
-  const stored = await STORAGE.get();
+  const stored = await SiteNotes.SiteNotes.STORAGE.get();
   for (const site of Object.keys(stored)) {
     if (site.startsWith('sorts|') && !stored[site].length) {
-      STORAGE.remove(site);
+      SiteNotes.STORAGE.remove(site);
     }
     if (!site.startsWith('sorts|') && !Object.keys(stored[site]).length) {
-      STORAGE.remove(site);
+      SiteNotes.STORAGE.remove(site);
     }
   }
 }
@@ -23,7 +23,7 @@ async function getSearchResults(search) {
 
   let more = false;
   let results = [];
-  const stored = await STORAGE.get();
+  const stored = await SiteNotes.STORAGE.get();
 
   for (const site of Object.keys(stored)) {
     if (!site.startsWith('sorts|')) {
