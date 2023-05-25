@@ -1,4 +1,32 @@
-.note-divider {
+#site-notes-body.popup {
+  background-color: white;
+  color: #7da7d8;
+  padding: 8px 8px 20px 8px;
+  border: 4px solid #7da7d8;
+  min-width: 400px;
+}
+
+#site-notes-body.sidebar {
+  background-color: white;
+  color: #7da7d8;
+  padding: 4px;
+  border-left: 4px solid #7da7d8;
+  height: 100vh;
+}
+
+#site-notes-body.popup .delete {
+  right: 14px;
+  padding-left: 4px;
+  padding-top: 4px;
+}
+
+#site-notes-body.popup .plus {
+  padding-left: 4px;
+  padding-top: 5px;
+}
+
+
+#site-notes-body .note-divider {
   width: 100%;
   height: 11px;
   cursor: pointer;
@@ -6,7 +34,7 @@
   background-color: white;
   width: calc(100% - 25px);
 }
-.plus {
+#site-notes-body .plus {
   float: left;
   border: 1px solid gray;
   border-radius: 11px;
@@ -17,7 +45,7 @@
   padding-left: 1px;
   color: gray;
 }
-.line {
+#site-notes-body .line {
   float: left;
   margin-left: 8px;
   width: calc(100% - 50px);
@@ -26,17 +54,16 @@
   border-top: 1px dashed gray;
 }
 
-.note textarea {
+#site-notes-body .note textarea {
   width: 100%;
   margin: 0px;
   border: none;
 }
 
-.delete {
+#site-notes-body .delete {
   position: absolute;
   right: 8px;
   margin-top: -4px;
-
   background-color: white;
   border: 1px solid red;
   border-radius: 11px;
@@ -49,16 +76,16 @@
   cursor: pointer;
 }
 
-#search-results a:visited {
+#site-notes-body #search-results a:visited {
   color: #7da7d8;
 }
-#search-results h4 {
+#site-notes-body #search-results h4 {
   margin-top: 4px;
   margin-bottom: 0px;
 }
-#search-results ul {
+#site-notes-body #search-results ul {
   margin: 0px;
 }
-#search-results li {
+#site-notes-body #search-results li {
   color: black;
 }
