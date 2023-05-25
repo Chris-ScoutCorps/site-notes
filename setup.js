@@ -17,10 +17,13 @@ const IS_CHROME = (() => {
 })();
 
 const SiteNotes = IS_CHROME ? {
+  IS_CHROME: true,
   SIDEBAR_OPEN: 'site-notes-sidebar-open',
   SIDEBAR_TOGGLE_ID: 'sidebar-toggle-button',
   STORAGE: chrome.storage.local,
-  IS_CHROME: true,
+  TABS: chrome.tabs,
+  WINDOWS: chrome.windows,
+  WINDOW_ID: undefined,
 } : {
   IS_CHROME: false,
   STORAGE: browser.storage.local,
@@ -29,7 +32,8 @@ const SiteNotes = IS_CHROME ? {
   WINDOW_ID: undefined,
 }
 
-if (!SiteNotes.IS_CHROME) {
+
+if (SiteNotes.WINDOWS) {
   SiteNotes.WINDOWS.getCurrent({ populate: true }).then((windowInfo) => {
     SiteNotes.WINDOW_ID = windowInfo.id;
   });
@@ -42,7 +46,9 @@ SiteNotes.debounce = (key, callback, timeout = 250) => {
 };
 
 (async function populateBody() {
-  if (SiteNotes.IS_CHROME) {
+  const isPopup = !!document.querySelectorAll('#site-notes-body.popup').length;
+
+  if (SiteNotes.IS_CHROME && !isPopup) {
     const frame = document.createElement('div');
     frame.id = 'site-notes-body';
     frame.className = 'sidebar';
@@ -86,14 +92,16 @@ SiteNotes.debounce = (key, callback, timeout = 250) => {
       button.value = `sidebar ${(await isOpen()) ? ' >' : ' <'}`
     });
 
-    async function showSidebar() {
-      const open = await isOpen();
-      document.getElementById('site-notes-body').style.display = open ? 'block' : 'none';
-    }
+    if (!isPopup) {
+      async function showSidebar() {
+        const open = await isOpen();
+        document.getElementById('site-notes-body').style.display = open ? 'block' : 'none';
+      }
 
-    showSidebar();
-    setInterval(async () => {
-      chrome.runtime?.id && showSidebar();
-    }, 250);
+      showSidebar();
+      setInterval(async () => {
+        chrome.runtime?.id && showSidebar();
+      }, 250);
+    }
   }
 })();

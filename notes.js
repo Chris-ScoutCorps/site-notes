@@ -80,7 +80,9 @@ SiteNotes.initNotes = function () {
   }
 
   async function updateTitle(stored) {
-    const tab = (await SiteNotes.TABS.query({ windowId: SiteNotes.WINDOW_ID, active: true }))[0];
+    const tab = SiteNotes.TABS
+      ? (await SiteNotes.TABS.query({ windowId: SiteNotes.WINDOW_ID, active: true }))[0]
+      : { url: document.URL, title: document.title };
     if (!stored['title'] || tab.url.length < stored['title-url'].length) {
       return {
         ...stored,
@@ -147,7 +149,13 @@ SiteNotes.initNotes = function () {
 
   async function reload() {
     SiteNotes.debounce("reload", async () => {
-      const tab = (DOMAIN_NOTES || PAGE_NOTES) && (await SiteNotes.TABS.query({ windowId: SiteNotes.WINDOW_ID, active: true }))[0];
+      if (!(DOMAIN_NOTES || PAGE_NOTES)) {
+        return;
+      }
+
+      const tab = SiteNotes.TABS
+        ? (await SiteNotes.TABS.query({ windowId: SiteNotes.WINDOW_ID, active: true }))[0]
+        : { url: document.URL, title: document.title };
       const url = new URL(tab.url);
 
       const domain = url.hostname ? url.hostname : (url.protocol + url.pathname);
@@ -214,12 +222,14 @@ SiteNotes.initNotes = function () {
   }
 
   reload().then(() => {
-    SiteNotes.TABS.onActivated.addListener(reload);
-    SiteNotes.TABS.onUpdated.addListener((_, update) => {
-      if (update.url) {
-        reload();
-      }
-    });
+    if (SiteNotes.TABS) {
+      SiteNotes.TABS.onActivated.addListener(reload);
+      SiteNotes.TABS.onUpdated.addListener((_, update) => {
+        if (update.url) {
+          reload();
+        }
+      });
+    }
   });
 };
 
