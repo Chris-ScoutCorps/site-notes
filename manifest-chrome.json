@@ -25,7 +25,8 @@
         "setup.js",
         "notes.js",
         "search.js"
-      ]
+      ],
+      "css": [ "styles.css" ]
     }
   ]
 }
