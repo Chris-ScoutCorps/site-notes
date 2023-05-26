@@ -85,7 +85,7 @@
       const results = await getSearchResults(search);
 
       if (search && !results.length) {
-        SEARCH_RESULTS.innerHTML = `No results for "${search}"`;
+        SEARCH_RESULTS.innerText = `No results for "${search}"`;
       } else {
         SEARCH_RESULTS.innerHTML = '';
       }
@@ -98,11 +98,11 @@
           link.target = '_blank';
           link.href = 'http://' + result.site;
           const header = document.createElement('h4');
-          header.innerHTML = result.site;
+          header.innerText = result.site;
           list = document.createElement('ul');
           link.appendChild(header);
           const title = document.createElement('i');
-          title.innerHTML = result.title;
+          title.innerText = result.title;
           SEARCH_RESULTS.appendChild(link);
           SEARCH_RESULTS.appendChild(title);
           SEARCH_RESULTS.appendChild(list);
@@ -110,7 +110,7 @@
         lastSite = result.site;
 
         const item = document.createElement('li');
-        item.innerHTML = result.note.note;
+        item.innerText = result.note.note;
         item.title = `Created ${result.note.created} | Updated: ${result.note.updated || '--'}`;
         list.appendChild(item);
       }

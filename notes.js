@@ -183,7 +183,7 @@ SiteNotes.initNotes = function () {
 
         if (stored['title']) {
           let title = document.createElement('i');
-          title.innerHTML = stored['title'];
+          title.innerText = stored['title'];
           DOMAIN_NOTES_LBL.appendChild(document.createElement('br'));
           DOMAIN_NOTES_LBL.appendChild(title);
         }
@@ -213,7 +213,7 @@ SiteNotes.initNotes = function () {
 
           if (stored['title']) {
             let title = document.createElement('i');
-            title.innerHTML = stored['title'];
+            title.innerText = stored['title'];
             PAGE_NOTES_LBL.appendChild(document.createElement('br'));
             PAGE_NOTES_LBL.appendChild(title);
           }
