@@ -47,35 +47,46 @@ SiteNotes.debounce = (key, callback, timeout = 250) => {
 
 (async function populateBody() {
   const isPopup = !!document.querySelectorAll('#site-notes-body.popup').length;
+  const isSidebar = !!document.querySelectorAll('#site-notes-body.sidebar').length;
+  const createFrame = SiteNotes.IS_CHROME && !isPopup && !isSidebar;
 
-  if (SiteNotes.IS_CHROME && !isPopup) {
-    const frame = document.createElement('div');
-    frame.id = 'site-notes-body';
-    frame.className = 'sidebar';
+  if (createFrame) {
+    const frame = document.createElement('iframe');
+    frame.id = 'site-notes-iframe';
     frame.style.width = '300px';
+    frame.style.height = '100vh';
     frame.style.top = '0px';
     frame.style.right = '0px';
     frame.style.position = 'fixed';
     frame.style.display = 'none';
     frame.style.zIndex = 9999999;
+    frame.src = chrome.runtime.getURL('sidebar/sidebar.html');
     document.body.appendChild(frame);
+  }
 
+  if (SiteNotes.IS_CHROME && isSidebar) {
     const stylesheet = document.createElement('style');
     stylesheet.innerText = `
-      #site-notes-body .plus {
-        padding-left: 4px;
-        padding-top: 5px;
-      }
-      #site-notes-body .delete-a {
-        display: block;
-      }
-      #site-notes-body .delete {
-        padding-left: 4px;
-        padding-top: 4px;
-      }
-      #site-notes-body #search-results ul {
-        margin-left: 25px;
-      }`;
+        body {
+          margin: 0px;
+        }
+        #site-notes-body.sidebar {
+          height: calc(100vh - 10px);
+        }
+        #site-notes-body .plus {
+          padding-left: 4px;
+          padding-top: 5px;
+        }
+        #site-notes-body .delete-a {
+          display: block;
+        }
+        #site-notes-body .delete {
+          padding-left: 4px;
+          padding-top: 4px;
+        }
+        #site-notes-body #search-results ul {
+          margin-left: 25px;
+        }`;
     document.head.appendChild(stylesheet);
   }
 
@@ -111,21 +122,23 @@ SiteNotes.debounce = (key, callback, timeout = 250) => {
   if (SiteNotes.IS_CHROME) {
     const isOpen = async () => ((await SiteNotes.STORAGE.get(SiteNotes.SIDEBAR_OPEN)) || {})[SiteNotes.SIDEBAR_OPEN] === true;
 
-    const button = document.getElementById(SiteNotes.SIDEBAR_TOGGLE_ID);
-    button.style.display = 'block';
-    button.value = `sidebar ${(await isOpen()) ? ' >' : ' <'}`
-
-    button.addEventListener("click", async () => {
-      await SiteNotes.STORAGE.set({
-        [SiteNotes.SIDEBAR_OPEN]: !(await isOpen()),
-      });
+    if (isSidebar || isPopup) {
+      const button = document.getElementById(SiteNotes.SIDEBAR_TOGGLE_ID);
+      button.style.display = 'block';
       button.value = `sidebar ${(await isOpen()) ? ' >' : ' <'}`
-    });
 
-    if (!isPopup) {
+      button.addEventListener("click", async () => {
+        await SiteNotes.STORAGE.set({
+          [SiteNotes.SIDEBAR_OPEN]: !(await isOpen()),
+        });
+        button.value = `sidebar ${(await isOpen()) ? ' >' : ' <'}`
+      });
+    }
+
+    if (createFrame) {
       async function showSidebar() {
         const open = await isOpen();
-        document.getElementById('site-notes-body').style.display = open ? 'block' : 'none';
+        document.getElementById('site-notes-iframe').style.display = open ? 'block' : 'none';
       }
 
       showSidebar();

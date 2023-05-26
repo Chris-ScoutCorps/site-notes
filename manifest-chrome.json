@@ -21,12 +21,13 @@
   "content_scripts": [
     {
       "matches": [ "http://*/*", "https://*/*" ],
-      "js": [
-        "setup.js",
-        "notes.js",
-        "search.js"
-      ],
-      "css": [ "styles.css" ]
+      "js": [ "setup.js" ]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [ "styles.css", "sidebar/sidebar.html", "setup.js", "notes.js", "search.js" ],
+      "matches": [ "http://*/*", "https://*/*" ]
     }
   ]
 }
