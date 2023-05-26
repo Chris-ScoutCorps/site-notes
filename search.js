@@ -114,6 +114,10 @@
         item.title = `Created ${result.note.created} | Updated: ${result.note.updated || '--'}`;
         list.appendChild(item);
       }
+
+      if (search) {
+        SEARCH_RESULTS.appendChild(document.createElement('br'));
+      }
     });
   });
 })();
