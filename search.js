@@ -15,7 +15,7 @@
 
   const MAX_RESULTS = 100;
 
-  async function getSearchResults(search) {
+  async function getSearchResults(search, targets) {
     if (!search) {
       return;
     }
@@ -40,7 +40,7 @@
               score: 3 + (lsite.startsWith(search) || lsite.startsWith('www.' + search) ? 1 : 0) + (lnote.startsWith(search) ? 2 : lnote.includes(search) ? 1 : 0),
             });
           }
-        } else {
+        } else if (targets === 'all') {
           for (const i in stored['sorts|' + site]) {
             const uuid = stored['sorts|' + site][i];
             const note = stored[site][uuid];
@@ -78,11 +78,11 @@
   const SEARCH_TXT = document.getElementById('search-txt');
   const SEARCH_RESULTS = document.getElementById('search-results');
 
-  SEARCH_TXT.value = '';
-  SEARCH_TXT.addEventListener('keyup', (e) => {
+  const handleSearch = (e) => {
     SiteNotes.debounce("search", async () => {
-      const search = e.target.value.toLowerCase();
-      const results = await getSearchResults(search);
+      const search = document.getElementById('search-txt').value.toLowerCase();
+      const targets = document.querySelectorAll('[name="search-targets"]:checked')[0].value;
+      const results = await getSearchResults(search, targets);
 
       if (search && !results.length) {
         SEARCH_RESULTS.innerText = `No results for "${search}"`;
@@ -114,10 +114,10 @@
         item.title = `Created ${result.note.created} | Updated: ${result.note.updated || '--'}`;
         list.appendChild(item);
       }
-
-      if (search) {
-        SEARCH_RESULTS.appendChild(document.createElement('br'));
-      }
     });
-  });
+  };
+
+  SEARCH_TXT.value = '';
+  SEARCH_TXT.addEventListener('keyup', handleSearch);
+  document.getElementsByName('search-targets').forEach(t => t.addEventListener('change', handleSearch));
 })();
