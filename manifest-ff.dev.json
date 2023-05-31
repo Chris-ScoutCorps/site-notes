@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+
+  "name": "Site Notes Dev",
+  "description": "Take notes that show up for a specific website",
+  "version": "1.0.1",
+
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "sitenotesdev@scoutcorpsllc.com"
+    }
+  },
+
+  "icons": {
+    "48": "icons/icon48-dev.png",
+    "96": "icons/icon96-dev.png",
+    "128": "icons/icon-dev.png"
+  },
+
+  "action": {
+    "default_icon": "icons/icon.png",
+    "default_popup": "popup/popup.html"
+  },
+
+  "sidebar_action": {
+    "default_icon": "icons/icon-dev.png",
+    "default_title": "Site Notes",
+    "default_panel": "sidebar/sidebar.html"
+  },
+
+  "permissions": [ "storage", "tabs" ]
+}
