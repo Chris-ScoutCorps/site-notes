@@ -18,7 +18,6 @@ const IS_CHROME = (() => {
 
 const SiteNotes = IS_CHROME ? {
   IS_CHROME: true,
-  SIDEBAR_OPEN: 'site-notes-sidebar-open',
   SIDEBAR_TOGGLE_ID: 'sidebar-toggle-button',
   STORAGE: chrome.storage.local,
   TABS: chrome.tabs,
@@ -31,8 +30,11 @@ const SiteNotes = IS_CHROME ? {
   WINDOWS: browser.windows,
   WINDOW_ID: undefined,
 }
-
-const SETTINGS_KEYS = ['site-notes-sidebar-open'];
+SiteNotes.VERSION = 1;
+SiteNotes.SETTINGS_KEYS = {
+  SIDEBAR_OPEN: 'site-notes-sidebar-open',
+  LAST_NOTE_ID: 'last-server-note-id',
+};
 
 if (SiteNotes.WINDOWS) {
   SiteNotes.WINDOWS.getCurrent({ populate: true }).then((windowInfo) => {
@@ -131,7 +133,7 @@ SiteNotes.debounce = (key, callback, timeout = 250) => {
   }
 
   if (SiteNotes.IS_CHROME) {
-    const isOpen = async () => ((await SiteNotes.STORAGE.get(SiteNotes.SIDEBAR_OPEN)) || {})[SiteNotes.SIDEBAR_OPEN] === true;
+    const isOpen = async () => ((await SiteNotes.STORAGE.get(SiteNotes.SETTINGS_KEYS.SIDEBAR_OPEN)) || {})[SiteNotes.SETTINGS_KEYS.SIDEBAR_OPEN] === true;
 
     if (isSidebar || isPopup) {
       const button = document.getElementById(SiteNotes.SIDEBAR_TOGGLE_ID);
@@ -140,7 +142,7 @@ SiteNotes.debounce = (key, callback, timeout = 250) => {
 
       button.addEventListener("click", async () => {
         await SiteNotes.STORAGE.set({
-          [SiteNotes.SIDEBAR_OPEN]: !(await isOpen()),
+          [SiteNotes.SETTINGS_KEYS.SIDEBAR_OPEN]: !(await isOpen()),
         });
         button.value = `sidebar ${(await isOpen()) ? ' >' : ' <'}`
       });
@@ -173,11 +175,11 @@ const SESSION_ID = uuidv4();
     const toStore = {};
     const toRem = [];
     for (const key of Object.keys(stored).filter(
-      k => !k.startsWith('sorts|') && !SETTINGS_KEYS.includes(k) && !stored[k].v
+      k => !k.startsWith('sorts|') && !Object.values(SiteNotes.SETTINGS_KEYS).includes(k) && !stored[k].v
     )) {
       const value = stored[key];
       toStore[key] = {
-        v: 1,
+        v: SiteNotes.VERSION,
         title: value['title'],
         titleUrl: value['title-url'],
         notes: Object.keys(value)

@@ -8,7 +8,7 @@ SiteNotes.initNotes = function () {
   const PAGE_NOTES = document.getElementById('page-notes');
 
   async function getOrDefault(url) {
-    return (await SiteNotes.STORAGE.get(url) || {})[url] || { v: 1, sorts: [], notes: {} };
+    return (await SiteNotes.STORAGE.get(url) || {})[url] || { v: SiteNotes.VERSION, sorts: [], notes: {} };
   }
 
   function appendAddNoteButton(el, url, before) {
