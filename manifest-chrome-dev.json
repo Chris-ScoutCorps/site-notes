@@ -1,0 +1,33 @@
+{
+  "manifest_version": 3,
+
+  "name": "Site Notes Dev",
+  "description": "Take notes that show up for a specific website",
+  "version": "1.0",
+
+  "icons": {
+    "48": "icons/icon48-dev.png",
+    "96": "icons/icon96-dev.png",
+    "128": "icons/icon-dev.png"
+  },
+
+  "action": {
+    "default_icon": "icons/icon-dev.png",
+    "default_popup": "popup/popup.html"
+  },
+
+  "permissions": [ "storage", "tabs" ],
+
+  "content_scripts": [
+    {
+      "matches": [ "http://*/*", "https://*/*" ],
+      "js": [ "setup.js" ]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [ "styles.css", "sidebar/sidebar.html", "setup.js", "notes.js", "search.js" ],
+      "matches": [ "http://*/*", "https://*/*" ]
+    }
+  ]
+}
