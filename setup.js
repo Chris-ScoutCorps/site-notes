@@ -158,3 +158,48 @@ SiteNotes.debounce = (key, callback, timeout = 250) => {
     }
   }
 })();
+
+function uuidv4() {
+  return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
+    (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+  );
+}
+const SESSION_ID = uuidv4();
+
+(async function migrations() {
+  await (async function v1() {
+    const stored = await SiteNotes.STORAGE.get();
+    const toStore = {};
+    const toRem = [];
+    for (const key of Object.keys(stored).filter(
+      k => !k.startsWith('sorts|') && !stored[k].v
+    )) {
+      const value = stored[key];
+      toStore[key] = {
+        v: 1,
+        title: value['title'],
+        titleUrl: value['title-url'],
+        notes: Object.keys(value)
+          .filter(k => k !== 'title' && k !== 'title-url')
+          .reduce((acc, k) => ({
+            ...acc,
+            [k]: {
+              text: value[k].note,
+              created: value[k].created,
+              updated: value[k].updated,
+              session: SESSION_ID,
+              number: 1,
+            },
+          }), {}),
+        sorts: stored['sorts|' + key] || [],
+      };
+      toRem.push(key, 'sorts|' + key);
+    }
+    toRem.push(...Object.keys(stored).filter(k => k.startsWith('sorts|')));
+
+    await SiteNotes.STORAGE.set(toStore);
+    await SiteNotes.STORAGE.remove(toRem.filter(k => !toStore[k]));
+
+    //alert(JSON.stringify(await SiteNotes.STORAGE.get(), undefined, 2));
+  })();
+})();

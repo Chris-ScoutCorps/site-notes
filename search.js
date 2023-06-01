@@ -1,18 +1,6 @@
 'use strict';
 
 (function initSearch() {
-  async function clean() {
-    const stored = await SiteNotes.SiteNotes.STORAGE.get();
-    for (const site of Object.keys(stored)) {
-      if (site.startsWith('sorts|') && !stored[site].length) {
-        SiteNotes.STORAGE.remove(site);
-      }
-      if (!site.startsWith('sorts|') && !Object.keys(stored[site]).length) {
-        SiteNotes.STORAGE.remove(site);
-      }
-    }
-  }
-
   const MAX_RESULTS = 100;
 
   async function getSearchResults(search, targets) {
@@ -27,41 +15,40 @@
     const stored = await SiteNotes.STORAGE.get();
 
     for (const site of Object.keys(stored)) {
-      if (!site.startsWith('sorts|')) {
-        const lsite = site.toLowerCase();
-        if (lsite.includes(search) || (stored[site]['title'] || '').toLowerCase().includes(search)) {
-          for (const note of Object.values(stored[site])) {
-            if (!note.note) { continue; }
-            const lnote = note.note.toLowerCase();
+      const lsite = site.toLowerCase();
+      if (lsite.includes(search) || (stored[site].title || '').toLowerCase().includes(search)) {
+        for (const i in stored[site].sorts) {
+          const uuid = stored[site].sorts[i];
+          const note = stored[site].notes[uuid];
+          const lnote = (note.text || '').toLowerCase();
+          const order = 1 - (i / Object.keys(stored[site].notes).length);
+          results.push({
+            site,
+            title: stored[site].title,
+            note,
+            score: 3 + (lsite.startsWith(search) || lsite.startsWith('www.' + search) ? 1 : 0) + (lnote.startsWith(search) ? 2 : lnote.includes(search) ? 1 : 0) + order,
+          });
+        }
+      } else if (targets === 'all') {
+        for (const i in stored[site].sorts) {
+          const uuid = stored[site].sorts[i];
+          const note = stored[site].notes[uuid];
+          const lnote = (note.text || '').toLowerCase();
+          if (lnote.includes(search)) {
+            const order = 1 - (i / Object.keys(stored[site].notes).length);
             results.push({
               site,
-              title: stored[site]['title'],
-              note: note,
-              score: 3 + (lsite.startsWith(search) || lsite.startsWith('www.' + search) ? 1 : 0) + (lnote.startsWith(search) ? 2 : lnote.includes(search) ? 1 : 0),
+              title: stored[site].title,
+              note,
+              score: (lnote.startsWith(search) ? 2 : lnote.includes(search) ? 1 : 0) + order,
             });
           }
-        } else if (targets === 'all') {
-          for (const i in stored['sorts|' + site]) {
-            const uuid = stored['sorts|' + site][i];
-            const note = stored[site][uuid];
-            if (!note.note) { continue; }
-            const lnote = note.note.toLowerCase();
-            if (lnote.includes(search)) {
-              const order = 1 - (i / Object.keys(stored[site]).length);
-              results.push({
-                site,
-                title: stored[site]['title'],
-                note,
-                score: (lnote.startsWith(search) ? 2 : lnote.includes(search) ? 1 : 0) + order,
-              });
-            }
-          }
         }
+      }
 
-        if (results.length > MAX_RESULTS && search.length <= 3) {
-          more = true;
-          break;
-        }
+      if (results.length > MAX_RESULTS && search.length <= 3) {
+        more = true;
+        break;
       }
     }
 
@@ -72,27 +59,29 @@
 
     results.sort((a, b) => b.score - a.score);
 
-    return results;
+    return { results, more };
   }
 
   const SEARCH_TXT = document.getElementById('search-txt');
   const SEARCH_RESULTS = document.getElementById('search-results');
 
-  const handleSearch = (e) => {
+  const handleSearch = (_) => {
     SiteNotes.debounce("search", async () => {
       const search = document.getElementById('search-txt').value.toLowerCase();
       const targets = document.querySelectorAll('[name="search-targets"]:checked')[0].value;
       const results = await getSearchResults(search, targets);
 
-      if (search && !results.length) {
+      if (search && !results.results.length) {
         SEARCH_RESULTS.innerText = `No results for "${search}"`;
+      } else if (search && results.results.length && results.more) {
+        SEARCH_RESULTS.innerText = `Showing first ${MAX_RESULTS} results`;
       } else {
         SEARCH_RESULTS.innerHTML = '';
       }
 
       let lastSite = null;
       let list = null;
-      for (const result of (results || [])) {
+      for (const result of (results.results || [])) {
         if (lastSite !== result.site) {
           const link = document.createElement('a');
           link.target = '_blank';
@@ -110,7 +99,7 @@
         lastSite = result.site;
 
         const item = document.createElement('li');
-        item.innerText = result.note.note;
+        item.innerText = result.note.text;
         item.title = `Created ${result.note.created} | Updated: ${result.note.updated || '--'}`;
         list.appendChild(item);
       }
