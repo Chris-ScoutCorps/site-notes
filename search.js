@@ -4,14 +4,13 @@
   const MAX_RESULTS = 100;
 
   async function getSearchResults(search, targets) {
-    if (!search) {
-      return;
-    }
-    //alert(e.target.value)
-    //await clean();
-
     let more = false;
     let results = [];
+
+    if (!search) {
+      return { results, more };
+    }
+
     const stored = await SiteNotes.STORAGE.get();
 
     for (const site of Object.keys(stored)) {
