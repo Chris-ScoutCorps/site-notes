@@ -25,6 +25,14 @@
   padding-top: 5px;
 }
 
+#site-notes-body label span {
+  font-size: 0.8em;
+  vertical-align: middle;
+  padding-bottom: 4px;
+}
+#site-notes-body input[type='radio'] {
+  transform: scale(0.8);
+}
 
 #site-notes-body .note-divider {
   width: 100%;

@@ -112,11 +112,11 @@ SiteNotes.debounce = (key, callback, timeout = 250) => {
       <div id="search-opts" style="display: flex; align-items: left;">
         <label style="margin-left: 0px;">
           <input type="radio" name="search-targets" value="all" style="margin-left: 0px;" checked />
-          Everything
+          <span>Everything</span>
         </label>
         <label style="margin-left: 10px;">
           <input type="radio" name="search-targets" value="headers" />
-          URLs & Titles Only
+          <span>URLs & Titles Only</span>
         </label>
       </div>
       <div id="search-results" style="width: 100%; margin-bottom: 10px; margin-top: 10px;"></div>
