@@ -32,6 +32,7 @@ const SiteNotes = IS_CHROME ? {
   WINDOW_ID: undefined,
 }
 
+const SETTINGS_KEYS = ['site-notes-sidebar-open'];
 
 if (SiteNotes.WINDOWS) {
   SiteNotes.WINDOWS.getCurrent({ populate: true }).then((windowInfo) => {
@@ -172,7 +173,7 @@ const SESSION_ID = uuidv4();
     const toStore = {};
     const toRem = [];
     for (const key of Object.keys(stored).filter(
-      k => !k.startsWith('sorts|') && !stored[k].v
+      k => !k.startsWith('sorts|') && !SETTINGS_KEYS.includes(k) && !stored[k].v
     )) {
       const value = stored[key];
       toStore[key] = {
