@@ -36,11 +36,30 @@
     await SiteNotes.STORAGE.set(stored);
   };
 
+  const processWriteResponse = async (response, url, key) => {
+    if (response.conflict) {
+      const stored = (await SiteNotes.STORAGE.get(url) || {})[url];
+      if (stored && stored.notes[key]) {
+        SiteNotes.STORAGE.set({
+          [url]: {
+            ...stored,
+            notes: {
+              ...stored.notes,
+              [response.conflict.key]: response.conflict,
+            },
+          }
+        });
+      }
+    }
+
+    await SiteNotes.STORAGE.set({ [SiteNotes.SETTINGS_KEYS.LAST_NOTE_ID]: response.since });
+  };
+
   SiteNotes.API = {
     refreshAllFromServer: async () => {
       try {
         const since = (await SiteNotes.STORAGE.get(SiteNotes.SETTINGS_KEYS.LAST_NOTE_ID) || {})[SiteNotes.SETTINGS_KEYS.LAST_NOTE_ID] || 0;
-        const response = (await fetch(`${API_URL}get?since=${since}&siteUrl=fake5.com`, { method: 'GET', ...OPTS, })).json();
+        const response = (await fetch(`${API_URL}get?since=${since}&siteUrl=fake6.com`, { method: 'GET', ...OPTS, })).json();
         //await saveChanges(response);
       } catch (e) {
         console.error(e);
@@ -60,7 +79,7 @@
       }
     },
 
-    upsertNote: async (url, title, titleUrl, key, text, number) => {
+    upsertNote: async (url, title, titleUrl, key, text, session, number) => {
       const response = (await fetch(
         `${API_URL}/upsert`,
         {
@@ -72,31 +91,17 @@
             titleUrl,
             key,
             text,
-            session: SESSION_ID,
-            number,
+            session,
+            newSession: SESSION_ID,
+            number: number + 1,
           }),
         }
       )).json();
 
-      if (response.conflict) {
-        const stored = (await SiteNotes.STORAGE.get(url) || {})[url];
-        if (stored && stored.notes[key]) {
-          SiteNotes.STORAGE.set({
-            [url]: {
-              ...stored,
-              notes: {
-                ...stored.notes,
-                [response.conflict.key]: response.conflict,
-              },
-            }
-          });
-        }
-      }
-
-      await SiteNotes.STORAGE.set({ [SiteNotes.SETTINGS_KEYS.LAST_NOTE_ID]: response.since });
+      await processWriteResponse(response);
     },
 
-    deleteNote: async (key, number) => {
+    deleteNote: async (url, key, session, number) => {
       const response = (await fetch(
         `${API_URL}/delete`,
         {
@@ -105,13 +110,13 @@
           body: JSON.stringify({
             key,
             text,
-            session: SESSION_ID,
+            session,
             number,
           }),
         }
       )).json();
 
-      await SiteNotes.STORAGE.set({ [SiteNotes.SETTINGS_KEYS.LAST_NOTE_ID]: response.since });
+      await processWriteResponse(response);
     },
   };
 
