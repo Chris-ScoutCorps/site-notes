@@ -1,13 +1,17 @@
 'use strict';
 
 (async () => {
-  const API_URL = 'https://localhost:7227/Notes/';
+  const API_URL = 'https://localhost:7227/Notes';
   const OPTS = {
     cache: 'no-cache',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    },
   };
 
   const saveChanges = async (response) => {
-    const sites = Object.keys(response.sites);
+    const sites = Object.keys(response.notesBySite);
     const stored = await SiteNotes.STORAGE.get(sites);
     for (const site of sites) {
       if (!stored[site]) {
@@ -15,18 +19,18 @@
           v: SiteNotes.VERSION,
           sorts: [],
           notes: {},
-          title: response.sites[site].title,
-          titleUrl: response.sites[site].titleUrl,
+          title: response.notesBySite[site].title,
+          titleUrl: response.notesBySite[site].titleUrl,
         };
       }
 
-      for (const deleted of response.sites[site].deleted) {
+      for (const deleted of response.notesBySite[site].deleted) {
         const existing = stored[site].notes[deleted.key];
         if (existing && existing.session === deleted.session && existing.number <= deleted.number) {
           delete stored[site].notes[deleted.key];
         }
       }
-      for (const note of response.sites[site].notes) {
+      for (const note of response.notesBySite[site].notes) {
         const existing = stored[site].notes[note.key];
         if (!existing) {
           stored[site].notes[note.key] = note;
@@ -65,65 +69,73 @@
     refreshAllFromServer: async () => {
       try {
         const since = (await SiteNotes.STORAGE.get(SiteNotes.SETTINGS_KEYS.LAST_NOTE_ID) || {})[SiteNotes.SETTINGS_KEYS.LAST_NOTE_ID] || 0;
-        const response = (await fetch(`${API_URL}get?since=${since}&session=${SESSION_ID}`, { method: 'GET', ...OPTS, })).json();
-        //await saveChanges(response);
+        const response = await (await fetch(`${API_URL}/get?since=${since}&session=${SESSION_ID}`, { method: 'GET', ...OPTS, })).json();
+        await saveChanges(response);
       } catch (e) {
-        console.error(e);
+        console.error(JSON.stringify(e));
       }
     },
 
     refreshFromServer: async (siteUrl, pageUrl) => {
       try {
         const since = (await SiteNotes.STORAGE.get(SiteNotes.SETTINGS_KEYS.LAST_NOTE_ID) || {})[SiteNotes.SETTINGS_KEYS.LAST_NOTE_ID] || 0;
-        const response = (await fetch(
+        const response = await (await fetch(
           `${API_URL}/get?since=${since}&session=${SESSION_ID}&siteUrl=${encodeURIComponent(siteUrl)}&pageUrl=${encodeURIComponent(pageUrl)}`,
           { method: 'GET', ...OPTS, }
         )).json();
-        //await saveChanges(response);
+        await saveChanges(response);
       } catch (e) {
-        console.error(e);
+        console.error(JSON.stringify(e));
       }
     },
 
     upsertNote: async (url, title, titleUrl, key, text, session, number) => {
-      const response = (await fetch(
-        `${API_URL}/upsert`,
-        {
-          method: 'POST',
-          ...OPTS,
-          body: JSON.stringify({
-            url,
-            title,
-            titleUrl,
-            key,
-            text,
-            session,
-            newSession: SESSION_ID,
-            number: number + 1,
-          }),
-        }
-      )).json();
+      try {
+        const response = await (await fetch(
+          `${API_URL}/upsert`,
+          {
+            method: 'POST',
+            ...OPTS,
+            body: JSON.stringify({
+              url,
+              title,
+              titleUrl,
+              key,
+              text,
+              session,
+              newSession: SESSION_ID,
+              number: number + 1,
+            }),
+          }
+        )).json();
 
-      await processWriteResponse(response, url, key);
+        await processWriteResponse(response, url, key);
+      } catch (e) {
+        console.error(JSON.stringify(e));
+      }
     },
 
     deleteNote: async (url, key, session, number) => {
-      const response = (await fetch(
-        `${API_URL}/delete`,
-        {
-          method: 'POST',
-          ...OPTS,
-          body: JSON.stringify({
-            key,
-            text,
-            session,
-            newSession: SESSION_ID,
-            number,
-          }),
-        }
-      )).json();
+      try {
+        const response = await (await fetch(
+          `${API_URL}/delete`,
+          {
+            method: 'POST',
+            ...OPTS,
+            body: JSON.stringify({
+              key,
+              text,
+              session,
+              newSession: SESSION_ID,
+              number,
+            }),
+          }
+        )).json();
 
-      await processWriteResponse(response, url, key);
+        await processWriteResponse(response, url, key);
+      } catch (e) {
+        console.error(JSON.stringify(e));
+      }
     },
   };
 
