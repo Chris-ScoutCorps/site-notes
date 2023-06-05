@@ -34,6 +34,10 @@
       }
     }
     await SiteNotes.STORAGE.set(stored);
+
+    if (response.since) {
+      await SiteNotes.STORAGE.set({ [SiteNotes.SETTINGS_KEYS.LAST_NOTE_ID]: response.since });
+    }
   };
 
   const processWriteResponse = async (response, url, key) => {
@@ -52,14 +56,16 @@
       }
     }
 
-    await SiteNotes.STORAGE.set({ [SiteNotes.SETTINGS_KEYS.LAST_NOTE_ID]: response.since });
+    if (response.since) {
+      await SiteNotes.STORAGE.set({ [SiteNotes.SETTINGS_KEYS.LAST_NOTE_ID]: response.since });
+    }
   };
 
   SiteNotes.API = {
     refreshAllFromServer: async () => {
       try {
         const since = (await SiteNotes.STORAGE.get(SiteNotes.SETTINGS_KEYS.LAST_NOTE_ID) || {})[SiteNotes.SETTINGS_KEYS.LAST_NOTE_ID] || 0;
-        const response = (await fetch(`${API_URL}get?since=${since}&siteUrl=fake6.com`, { method: 'GET', ...OPTS, })).json();
+        const response = (await fetch(`${API_URL}get?since=${since}&session=${SESSION_ID}`, { method: 'GET', ...OPTS, })).json();
         //await saveChanges(response);
       } catch (e) {
         console.error(e);
@@ -70,7 +76,7 @@
       try {
         const since = (await SiteNotes.STORAGE.get(SiteNotes.SETTINGS_KEYS.LAST_NOTE_ID) || {})[SiteNotes.SETTINGS_KEYS.LAST_NOTE_ID] || 0;
         const response = (await fetch(
-          `${API_URL}/get?since=${since}&siteUrl=${encodeURIComponent(siteUrl)}&pageUrl=${encodeURIComponent(pageUrl)}`,
+          `${API_URL}/get?since=${since}&session=${SESSION_ID}&siteUrl=${encodeURIComponent(siteUrl)}&pageUrl=${encodeURIComponent(pageUrl)}`,
           { method: 'GET', ...OPTS, }
         )).json();
         //await saveChanges(response);
@@ -98,7 +104,7 @@
         }
       )).json();
 
-      await processWriteResponse(response);
+      await processWriteResponse(response, url, key);
     },
 
     deleteNote: async (url, key, session, number) => {
@@ -111,12 +117,13 @@
             key,
             text,
             session,
+            newSession: SESSION_ID,
             number,
           }),
         }
       )).json();
 
-      await processWriteResponse(response);
+      await processWriteResponse(response, url, key);
     },
   };
 
