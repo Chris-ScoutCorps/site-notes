@@ -98,24 +98,34 @@ SiteNotes.initNotes = function () {
       created: (new Date().toLocaleString()),
       updated: null,
       session: SESSION_ID,
-      number: 1,
+      number: 0,
     };
     appendNote(el, url, newId, note, before ? el.querySelectorAll(`[note-id='${before}']`)[0] : null);
 
-    const stored = await getOrDefault(url);
+    const data = await updateTitle(await getOrDefault(url));
 
-    const found = stored.sorts.indexOf(before);
+    const found = data.sorts.indexOf(before);
     if (found !== -1) {
-      stored.sorts.splice(found, 0, newId);
+      data.sorts.splice(found, 0, newId);
     } else {
-      stored.sorts.push(newId);
+      data.sorts.push(newId);
     }
 
-    SiteNotes.STORAGE.set({
+    SiteNotes.API.upsertNote(
+      url,
+      data.title,
+      data.titleUrl,
+      newId,
+      note.text,
+      note.session,
+      note.number
+    );
+
+    await SiteNotes.STORAGE.set({
       [url]: {
-        ...(await updateTitle(stored)),
+        ...data,
         notes: {
-          ...stored.notes,
+          ...data.notes,
           [newId]: note,
         },
       }
@@ -128,30 +138,42 @@ SiteNotes.initNotes = function () {
 
     const stored = await getOrDefault(url);
 
+    SiteNotes.API.deleteNote(url, uuid, stored.notes[uuid].session, stored.notes[uuid].number);
+
     delete stored.notes[uuid];
     if (!Object.keys(stored.notes).length) {
-      SiteNotes.STORAGE.remove(url);
+      await SiteNotes.STORAGE.remove(url);
     } else {
       stored.sorts = stored.sorts.filter(x => x !== uuid);
-      SiteNotes.STORAGE.set({ [url]: stored });
+      await SiteNotes.STORAGE.set({ [url]: stored });
     }
   }
 
   async function updateNote(url, uuid, newNote) {
     SiteNotes.debounce(`update-${uuid}`, async () => {
-      const stored = await getOrDefault(url);
+      const data = await updateTitle(await getOrDefault(url));
 
-      SiteNotes.STORAGE.set({
+      SiteNotes.API.upsertNote(
+        url,
+        data.title,
+        data.titleUrl,
+        uuid,
+        newNote,
+        data.notes[uuid].session,
+        data.notes[uuid].number + 1
+      );
+
+      await SiteNotes.STORAGE.set({
         [url]: {
-          ...(await updateTitle(stored)),
+          ...data,
           notes: {
-            ...stored.notes,
+            ...data.notes,
             [uuid]: {
-              ...stored.notes[uuid],
+              ...data.notes[uuid],
               text: newNote,
               updated: (new Date().toLocaleString()),
               session: SESSION_ID,
-              number: stored.notes[uuid].number + 1,
+              number: data.notes[uuid].number + 1,
             },
           },
         }
@@ -172,6 +194,8 @@ SiteNotes.initNotes = function () {
 
       const domain = url.hostname ? url.hostname : (url.protocol + url.pathname);
       const pagepath = url.hostname ? (url.hostname + url.pathname) : url.href;
+
+      SiteNotes.API.refreshFromServer(domain, pagepath);
 
       if (DOMAIN_NOTES) {
         DOMAIN_NOTES.innerHTML = '';

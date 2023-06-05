@@ -104,7 +104,7 @@
               text,
               session,
               newSession: SESSION_ID,
-              number: number + 1,
+              number,
             }),
           }
         )).json();
