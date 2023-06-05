@@ -132,7 +132,7 @@ SiteNotes.debounce = (key, callback, timeout = 250) => {
 
     <div style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid lightgray; margin-top: 12px;">
       <div style="flex: 1;"> </div>
-      <a href='javascript:void(0);' id="refresh-button" style="text-decoration: none; font-size: 2em;">&#8635;</a>
+      <a href='#' id="refresh-button" style="text-decoration: none; font-size: 2em;">&#8635;</a>
     </div>
   `;
   }
