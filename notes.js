@@ -139,7 +139,7 @@ SiteNotes.initNotes = function () {
 
     const stored = await getOrDefault(url);
 
-    SiteNotes.API.deleteNote(url, uuid, stored.notes[uuid].session, stored.notes[uuid].number);
+    SiteNotes.API.deleteNote(url, uuid, stored.notes[uuid].text, stored.notes[uuid].session, stored.notes[uuid].number);
 
     delete stored.notes[uuid];
     if (!Object.keys(stored.notes).length) {
@@ -252,6 +252,22 @@ SiteNotes.initNotes = function () {
         }
       });
     }
+  });
+
+  document.getElementById('refresh-button').addEventListener('click', async () => {
+    await SiteNotes.STORAGE.set({ [SiteNotes.SETTINGS_KEYS.LAST_NOTE_ID]: 0 });
+
+    const tab = SiteNotes.TABS
+      ? (await SiteNotes.TABS.query({ windowId: SiteNotes.WINDOW_ID, active: true }))[0]
+      : { url: document.URL, title: document.title };
+    const url = new URL(tab.url);
+
+    const domain = url.hostname ? url.hostname : (url.protocol + url.pathname);
+    const pagepath = url.hostname ? (url.hostname + url.pathname) : url.href;
+
+    await SiteNotes.API.refreshFromServer(domain, pagepath);
+    await SiteNotes.API.refreshAllFromServer();
+    await reload();
   });
 };
 
