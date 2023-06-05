@@ -118,7 +118,8 @@ SiteNotes.initNotes = function () {
       newId,
       note.text,
       note.session,
-      note.number
+      note.number,
+      found !== -1 ? found + 1 : (data.sorts.length - 1)
     );
 
     await SiteNotes.STORAGE.set({
@@ -160,7 +161,8 @@ SiteNotes.initNotes = function () {
         uuid,
         newNote,
         data.notes[uuid].session,
-        data.notes[uuid].number + 1
+        data.notes[uuid].number + 1,
+        data.sorts.indexOf(uuid)
       );
 
       await SiteNotes.STORAGE.set({
@@ -195,7 +197,7 @@ SiteNotes.initNotes = function () {
       const domain = url.hostname ? url.hostname : (url.protocol + url.pathname);
       const pagepath = url.hostname ? (url.hostname + url.pathname) : url.href;
 
-      SiteNotes.API.refreshFromServer(domain, pagepath);
+      await SiteNotes.API.refreshFromServer(domain, pagepath);
 
       if (DOMAIN_NOTES) {
         DOMAIN_NOTES.innerHTML = '';

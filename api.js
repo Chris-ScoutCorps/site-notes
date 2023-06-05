@@ -34,6 +34,11 @@
         const existing = stored[site].notes[note.key];
         if (!existing) {
           stored[site].notes[note.key] = note;
+          if (note.sortOrder < stored[site].sorts.length) {
+            stored[site].sorts.splice(note.sortOrder, 0, note.key);
+          } else {
+            stored[site].sorts.push(note.key);
+          }
         }
       }
     }
@@ -72,7 +77,7 @@
         const response = await (await fetch(`${API_URL}/get?since=${since}&session=${SESSION_ID}`, { method: 'GET', ...OPTS, })).json();
         await saveChanges(response);
       } catch (e) {
-        console.error(JSON.stringify(e));
+        console.error(e, e.stack);
       }
     },
 
@@ -85,11 +90,11 @@
         )).json();
         await saveChanges(response);
       } catch (e) {
-        console.error(JSON.stringify(e));
+        console.error(e, e.stack);
       }
     },
 
-    upsertNote: async (url, title, titleUrl, key, text, session, number) => {
+    upsertNote: async (url, title, titleUrl, key, text, session, number, sortOrder) => {
       try {
         const response = await (await fetch(
           `${API_URL}/upsert`,
@@ -105,13 +110,14 @@
               session,
               newSession: SESSION_ID,
               number,
+              sortOrder,
             }),
           }
         )).json();
 
         await processWriteResponse(response, url, key);
       } catch (e) {
-        console.error(JSON.stringify(e));
+        console.error(e, e.stack);
       }
     },
 
@@ -134,7 +140,7 @@
 
         await processWriteResponse(response, url, key);
       } catch (e) {
-        console.error(JSON.stringify(e));
+        console.error(e, e.stack);
       }
     },
   };
