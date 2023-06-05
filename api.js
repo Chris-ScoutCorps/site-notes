@@ -129,7 +129,7 @@
         const response = await (await fetch(
           `${API_URL}/delete`,
           {
-            method: 'POST',
+            method: 'DELETE',
             ...OPTS,
             body: JSON.stringify({
               key,
