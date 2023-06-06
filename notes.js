@@ -269,8 +269,7 @@ SiteNotes.initNotes = function () {
       PAGE_NOTES.innerHTML = '';
     }
 
-    await SiteNotes.STORAGE.set({ [SiteNotes.SETTINGS_KEYS.LAST_NOTE_ID]: 0 });
-    await SiteNotes.API.refreshAllFromServer();
+    await SiteNotes.API.sync();
 
     await reload();
   });

@@ -138,6 +138,29 @@
         console.error(e, e.stack);
       }
     },
+
+    sync: async () => {
+      try {
+        const response = await (await fetch(
+          `${API_URL}/sync`,
+          {
+            method: 'POST',
+            ...OPTS,
+            body: JSON.stringify({
+              since: null,
+              notesForSite:
+                Object.entries(await SiteNotes.STORAGE.get())
+                  .reduce((acc, entry) => Object.values(SiteNotes.SETTINGS_KEYS).includes(entry[0]) ? acc : { ...acc, [entry[0]]: entry[1], }, {}),
+            }),
+          }
+        )).json();
+
+        await saveChanges(response);
+      } catch (e) {
+        console.error(e, e.stack);
+      }
+    },
+
   };
 
   SiteNotes.API.refreshAllFromServer();
