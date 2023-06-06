@@ -17,7 +17,6 @@
       if (!stored[site]) {
         stored[site] = {
           v: SiteNotes.VERSION,
-          sorts: [],
           notes: {},
           title: response.notesBySite[site].title,
           titleUrl: response.notesBySite[site].titleUrl,
@@ -34,15 +33,8 @@
         const existing = stored[site].notes[note.key];
         if (!existing) {
           stored[site].notes[note.key] = note;
-          if (note.sortOrder < stored[site].sorts.length) {
-            stored[site].sorts.splice(note.sortOrder, 0, note.key);
-          } else {
-            stored[site].sorts.push(note.key);
-          }
         }
       }
-
-      stored[site].sorts = stored[site].sorts.filter(x => stored[site].notes[x]);
     }
 
     await SiteNotes.STORAGE.set(stored);

@@ -16,11 +16,9 @@
     for (const site of Object.keys(stored)) {
       const lsite = site.toLowerCase();
       if (lsite.includes(search) || (stored[site].title || '').toLowerCase().includes(search)) {
-        for (const i in stored[site].sorts) {
-          const uuid = stored[site].sorts[i];
-          const note = stored[site].notes[uuid];
+        for (const note in Object.values(stored[site].notes)) {
           const lnote = (note.text || '').toLowerCase();
-          const order = 1 - (i / Object.keys(stored[site].notes).length);
+          const order = 1 - (note.sortOrder / Object.keys(stored[site].notes).length);
           results.push({
             site,
             title: stored[site].title,
@@ -29,12 +27,10 @@
           });
         }
       } else if (targets === 'all') {
-        for (const i in stored[site].sorts) {
-          const uuid = stored[site].sorts[i];
-          const note = stored[site].notes[uuid];
+        for (const note in Object.values(stored[site].notes)) {
           const lnote = (note.text || '').toLowerCase();
           if (lnote.includes(search)) {
-            const order = 1 - (i / Object.keys(stored[site].notes).length);
+            const order = 1 - (note.sortOrder / Object.keys(stored[site].notes).length);
             results.push({
               site,
               title: stored[site].title,

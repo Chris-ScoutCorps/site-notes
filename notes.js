@@ -8,7 +8,7 @@ SiteNotes.initNotes = function () {
   const PAGE_NOTES = document.getElementById('page-notes');
 
   async function getOrDefault(url) {
-    return (await SiteNotes.STORAGE.get(url) || {})[url] || { v: SiteNotes.VERSION, sorts: [], notes: {} };
+    return (await SiteNotes.STORAGE.get(url) || {})[url] || { v: SiteNotes.VERSION, notes: {} };
   }
 
   function appendAddNoteButton(el, url, before) {
@@ -104,11 +104,13 @@ SiteNotes.initNotes = function () {
 
     const data = await updateTitle(await getOrDefault(url));
 
-    const found = data.sorts.indexOf(before);
-    if (found !== -1) {
-      data.sorts.splice(found, 0, newId);
+    if (before) {
+      const sortBefore = data.notes[before].sortOrder;
+      const sortAfter = Object.values(data.notes).reduce((acc, note) => note.sortOrder < sortBefore && note.sortOrder > acc ? note.sortOrder : acc, 0);
+      note.sortOrder = (sortBefore + sortAfter) / 2;
     } else {
-      data.sorts.push(newId);
+      const sortAfter = Object.values(data.notes).reduce((acc, note) => note.sortOrder > acc ? note.sortOrder : acc, 0);
+      note.sortOrder = sortAfter + 1000000;
     }
 
     SiteNotes.API.upsertNote(
@@ -119,7 +121,7 @@ SiteNotes.initNotes = function () {
       note.text,
       note.session,
       note.number,
-      found !== -1 ? found + 1 : (data.sorts.length - 1)
+      note.sortOrder
     );
 
     await SiteNotes.STORAGE.set({
@@ -145,7 +147,6 @@ SiteNotes.initNotes = function () {
     if (!Object.keys(stored.notes).length) {
       await SiteNotes.STORAGE.remove(url);
     } else {
-      stored.sorts = stored.sorts.filter(x => x !== uuid);
       await SiteNotes.STORAGE.set({ [url]: stored });
     }
   }
@@ -162,7 +163,7 @@ SiteNotes.initNotes = function () {
         newNote,
         data.notes[uuid].session,
         data.notes[uuid].number + 1,
-        data.sorts.indexOf(uuid)
+        data.notes[uuid].sortOrder
       );
 
       await SiteNotes.STORAGE.set({
@@ -205,7 +206,10 @@ SiteNotes.initNotes = function () {
         DOMAIN_NOTES_LBL.innerText = domain;
         const stored = await getOrDefault(domain);
 
-        stored.sorts.forEach(k => {
+        const sorted = Object.keys(stored.notes);
+        sorted.sort((a, b) => stored.notes[a].sortOrder - stored.notes[b].sortOrder);
+
+        sorted.forEach(k => {
           appendNote(DOMAIN_NOTES, domain, k, stored.notes[k]);
         });
         appendAddNoteButton(DOMAIN_NOTES, domain, null);
@@ -227,7 +231,10 @@ SiteNotes.initNotes = function () {
           PAGE_NOTES_LBL.innerText = pagepath.replace(domain, '');
           const stored = await getOrDefault(pagepath);
 
-          stored.sorts.forEach(k => {
+          const sorted = Object.keys(stored.notes);
+          sorted.sort((a, b) => stored.notes[a].sortOrder - stored.notes[b].sortOrder);
+
+          sorted.forEach(k => {
             appendNote(PAGE_NOTES, pagepath, k, stored.notes[k]);
           });
           appendAddNoteButton(PAGE_NOTES, pagepath, null);
