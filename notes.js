@@ -106,10 +106,10 @@ SiteNotes.initNotes = function () {
 
     if (before) {
       const sortBefore = data.notes[before].sortOrder;
-      const sortAfter = Object.values(data.notes).reduce((acc, note) => note.sortOrder < sortBefore && note.sortOrder > acc ? note.sortOrder : acc, 0);
+      const sortAfter = Object.values(data.notes).reduce((acc, note) => note.sortOrder < sortBefore && note.sortOrder > acc ? note.sortOrder : acc, -10000000);
       note.sortOrder = (sortBefore + sortAfter) / 2;
     } else {
-      const sortAfter = Object.values(data.notes).reduce((acc, note) => note.sortOrder > acc ? note.sortOrder : acc, 0);
+      const sortAfter = Object.values(data.notes).reduce((acc, note) => note.sortOrder > acc ? note.sortOrder : acc, -10000000);
       note.sortOrder = sortAfter + 1000000;
     }
 
