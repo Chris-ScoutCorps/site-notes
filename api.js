@@ -44,27 +44,6 @@
     }
   };
 
-  const processWriteResponse = async (response, url, key) => {
-    if (response.conflict) {
-      const stored = (await SiteNotes.STORAGE.get(url) || {})[url];
-      if (stored && stored.notes[key]) {
-        SiteNotes.STORAGE.set({
-          [url]: {
-            ...stored,
-            notes: {
-              ...stored.notes,
-              [response.conflict.key]: response.conflict,
-            },
-          }
-        });
-      }
-    }
-
-    if (response.since) {
-      await SiteNotes.STORAGE.set({ [SiteNotes.SETTINGS_KEYS.LAST_NOTE_ID]: response.since });
-    }
-  };
-
   SiteNotes.API = {
     refreshAllFromServer: async () => {
       try {
@@ -110,7 +89,7 @@
           }
         )).json();
 
-        await processWriteResponse(response, url, key);
+        await saveChanges(response, url, key);
       } catch (e) {
         console.error(e, e.stack);
       }
@@ -133,7 +112,7 @@
           }
         )).json();
 
-        await processWriteResponse(response, url, key);
+        await saveChanges(response, url, key);
       } catch (e) {
         console.error(e, e.stack);
       }
