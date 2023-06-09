@@ -13,10 +13,10 @@
 
     const stored = await SiteNotes.STORAGE.get();
 
-    for (const site of Object.keys(stored)) {
+    for (const site of Object.keys(stored).filter(k => !Object.values(SiteNotes.SETTINGS_KEYS).includes(k))) {
       const lsite = site.toLowerCase();
       if (lsite.includes(search) || (stored[site].title || '').toLowerCase().includes(search)) {
-        for (const note in Object.values(stored[site].notes)) {
+        for (const note of Object.values(stored[site].notes)) {
           const lnote = (note.text || '').toLowerCase();
           const order = 1 - (note.sortOrder / Object.keys(stored[site].notes).length);
           results.push({
@@ -27,7 +27,7 @@
           });
         }
       } else if (targets === 'all') {
-        for (const note in Object.values(stored[site].notes)) {
+        for (const note of Object.values(stored[site].notes)) {
           const lnote = (note.text || '').toLowerCase();
           if (lnote.includes(search)) {
             const order = 1 - (note.sortOrder / Object.keys(stored[site].notes).length);
@@ -61,44 +61,51 @@
   const SEARCH_RESULTS = document.getElementById('search-results');
 
   const handleSearch = (_) => {
-    SiteNotes.debounce("search", async () => {
-      const search = document.getElementById('search-txt').value.toLowerCase();
-      const targets = document.querySelectorAll('[name="search-targets"]:checked')[0].value;
-      const results = await getSearchResults(search, targets);
+    SiteNotes.debounce("refresh", async () => {
+      await SiteNotes.API.refreshAllFromServer();
+      await doSearch();
+    }, 2500);
 
-      if (search && !results.results.length) {
-        SEARCH_RESULTS.innerText = `No results for "${search}"`;
-      } else if (search && results.results.length && results.more) {
-        SEARCH_RESULTS.innerText = `Showing first ${MAX_RESULTS} results`;
-      } else {
-        SEARCH_RESULTS.innerHTML = '';
+    SiteNotes.debounce("search", doSearch, 250);
+  };
+
+  const doSearch = async () => {
+    const search = document.getElementById('search-txt').value.toLowerCase();
+    const targets = document.querySelectorAll('[name="search-targets"]:checked')[0].value;
+    const results = await getSearchResults(search, targets);
+
+    if (search && !results.results.length) {
+      SEARCH_RESULTS.innerText = `No results for "${search}"`;
+    } else if (search && results.results.length && results.more) {
+      SEARCH_RESULTS.innerText = `Showing first ${MAX_RESULTS} results`;
+    } else {
+      SEARCH_RESULTS.innerHTML = '';
+    }
+
+    let lastSite = null;
+    let list = null;
+    for (const result of (results.results || [])) {
+      if (lastSite !== result.site) {
+        const link = document.createElement('a');
+        link.target = '_blank';
+        link.href = 'http://' + result.site;
+        const header = document.createElement('h4');
+        header.innerText = result.site;
+        list = document.createElement('ul');
+        link.appendChild(header);
+        const title = document.createElement('i');
+        title.innerText = result.title;
+        SEARCH_RESULTS.appendChild(link);
+        SEARCH_RESULTS.appendChild(title);
+        SEARCH_RESULTS.appendChild(list);
       }
+      lastSite = result.site;
 
-      let lastSite = null;
-      let list = null;
-      for (const result of (results.results || [])) {
-        if (lastSite !== result.site) {
-          const link = document.createElement('a');
-          link.target = '_blank';
-          link.href = 'http://' + result.site;
-          const header = document.createElement('h4');
-          header.innerText = result.site;
-          list = document.createElement('ul');
-          link.appendChild(header);
-          const title = document.createElement('i');
-          title.innerText = result.title;
-          SEARCH_RESULTS.appendChild(link);
-          SEARCH_RESULTS.appendChild(title);
-          SEARCH_RESULTS.appendChild(list);
-        }
-        lastSite = result.site;
-
-        const item = document.createElement('li');
-        item.innerText = result.note.text;
-        item.title = `Created ${result.note.created} | Updated: ${result.note.updated || '--'}`;
-        list.appendChild(item);
-      }
-    });
+      const item = document.createElement('li');
+      item.innerText = result.note.text;
+      item.title = `Created ${result.note.created} | Updated: ${result.note.updated || '--'}`;
+      list.appendChild(item);
+    }
   };
 
   SEARCH_TXT.value = '';
