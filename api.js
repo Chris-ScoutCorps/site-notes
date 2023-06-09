@@ -147,10 +147,25 @@
             method: 'POST',
             ...OPTS,
             body: JSON.stringify({
-              since: null,
-              notesForSite:
+              session: SESSION_ID,
+              notesBySite:
                 Object.entries(await SiteNotes.STORAGE.get())
-                  .reduce((acc, entry) => Object.values(SiteNotes.SETTINGS_KEYS).includes(entry[0]) ? acc : { ...acc, [entry[0]]: entry[1], }, {}),
+                  .reduce((acc, entry) =>
+                    Object.values(SiteNotes.SETTINGS_KEYS).includes(entry[0])
+                      ? acc
+                      : {
+                        ...acc,
+                        [entry[0]]: {
+                          ...entry[1],
+                          notes: Object.keys(entry[1].notes || {}).map(key => ({
+                            key,
+                            ...entry[1].notes[key],
+                            created: null,
+                            updated: null,
+                          })),
+                        },
+                      }
+                    , {}),
             }),
           }
         )).json();
