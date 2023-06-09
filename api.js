@@ -1,7 +1,8 @@
 'use strict';
 
 (async () => {
-  const API_URL = 'https://localhost:7227/Notes';
+  const NOTES_API_URL = 'https://localhost:7227/Notes';
+  const NOTEBOOKS_API_URL = 'https://localhost:7227/Notebooks';
   const OPTS = {
     cache: 'no-cache',
     headers: {
@@ -55,7 +56,7 @@
     refreshAllFromServer: async () => {
       try {
         const since = (await SiteNotes.STORAGE.get(SiteNotes.SETTINGS_KEYS.LAST_NOTE_ID) || {})[SiteNotes.SETTINGS_KEYS.LAST_NOTE_ID] || 0;
-        const response = await (await fetch(`${API_URL}/get?since=${since}&session=${SESSION_ID}`, { method: 'GET', ...OPTS, })).json();
+        const response = await (await fetch(`${NOTES_API_URL}/get?since=${since}&session=${SESSION_ID}`, { method: 'GET', ...OPTS, })).json();
         await saveChanges(response);
         checkDirty();
       } catch (e) {
@@ -67,7 +68,7 @@
       try {
         const since = (await SiteNotes.STORAGE.get(SiteNotes.SETTINGS_KEYS.LAST_NOTE_ID) || {})[SiteNotes.SETTINGS_KEYS.LAST_NOTE_ID] || 0;
         const response = await (await fetch(
-          `${API_URL}/get?since=${since}&session=${SESSION_ID}&siteUrl=${encodeURIComponent(siteUrl)}&pageUrl=${encodeURIComponent(pageUrl)}`,
+          `${NOTES_API_URL}/get?since=${since}&session=${SESSION_ID}&siteUrl=${encodeURIComponent(siteUrl)}&pageUrl=${encodeURIComponent(pageUrl)}`,
           { method: 'GET', ...OPTS, }
         )).json();
         await saveChanges(response);
@@ -80,7 +81,7 @@
     upsertNote: async (url, title, titleUrl, key, text, session, number, sortOrder) => {
       try {
         const response = await (await fetch(
-          `${API_URL}/upsert`,
+          `${NOTES_API_URL}/upsert`,
           {
             method: 'POST',
             ...OPTS,
@@ -109,7 +110,7 @@
     deleteNote: async (url, key, text, session, number) => {
       try {
         const response = await (await fetch(
-          `${API_URL}/delete`,
+          `${NOTES_API_URL}/delete`,
           {
             method: 'DELETE',
             ...OPTS,
@@ -134,7 +135,7 @@
     sync: async () => {
       try {
         const response = await (await fetch(
-          `${API_URL}/sync`,
+          `${NOTES_API_URL}/sync`,
           {
             method: 'POST',
             ...OPTS,
@@ -170,7 +171,65 @@
       }
     },
 
+    registerNotebook: async (id) => {
+      const available = (await SiteNotes.STORAGE.get(SiteNotes.SETTINGS_KEYS.AVAILABLE_NOTEBOOKS) || {})[SiteNotes.SETTINGS_KEYS.AVAILABLE_NOTEBOOKS] || [];
+      const notebook = available.filter(n => n.id === id)[0];
+
+      if (!notebook.key) {
+        try {
+          const response = await (await fetch(
+            `${NOTEBOOKS_API_URL}/register`,
+            {
+              method: 'POST',
+              ...OPTS,
+              body: JSON.stringify(notebook),
+            }
+          )).json();
+
+          notebook.key = response.key;
+          await SiteNotes.STORAGE.set({ [SiteNotes.SETTINGS_KEYS.AVAILABLE_NOTEBOOKS]: available });
+
+          const active = (await SiteNotes.STORAGE.get(SiteNotes.SETTINGS_KEYS.ACTIVE_NOTEBOOK) || {})[SiteNotes.SETTINGS_KEYS.ACTIVE_NOTEBOOK] || {};
+          if (active.id === notebook.id) {
+            await SiteNotes.STORAGE.set({ [SiteNotes.SETTINGS_KEYS.ACTIVE_NOTEBOOK]: notebook });
+          }
+        } catch (e) {
+          console.error(e, e.stack);
+        }
+      }
+    },
   };
 
   SiteNotes.API.refreshAllFromServer();
+
+  //TODO:
+  // - server register: if the notebook doesn't exist or has no key, give them a key (otherwise fail)
+  // - server: change user to notebook id
+  // - every request requires notebook id and key
+  // - show list of notebooks and keys (hidden)
+  // - open notebook (requires key)
+  // - rename notebook (requires key and id)
+
+  (async function initNotebooks() {
+    const active = (await SiteNotes.STORAGE.get(SiteNotes.SETTINGS_KEYS.ACTIVE_NOTEBOOK) || {})[SiteNotes.SETTINGS_KEYS.ACTIVE_NOTEBOOK] || null;
+    const available = (await SiteNotes.STORAGE.get(SiteNotes.SETTINGS_KEYS.AVAILABLE_NOTEBOOKS) || {})[SiteNotes.SETTINGS_KEYS.AVAILABLE_NOTEBOOKS] || [];
+
+    if (available.length === 0) {
+      available.push({
+        id: uuidv4(),
+        name: 'New Notebook',
+        key: null,
+      });
+      await SiteNotes.STORAGE.set({ [SiteNotes.SETTINGS_KEYS.AVAILABLE_NOTEBOOKS]: available });
+    }
+
+    if (active) {
+      SiteNotes.API.registerNotebook(active.id);
+    } else {
+      SiteNotes.API.registerNotebook(available[0].id);
+      await SiteNotes.STORAGE.set({ [SiteNotes.SETTINGS_KEYS.ACTIVE_NOTEBOOK]: available[0] });
+    }
+
+  })();
+
 })();

@@ -35,6 +35,8 @@ SiteNotes.SETTINGS_KEYS = {
   SIDEBAR_OPEN: 'site-notes-sidebar-open',
   LAST_NOTE_ID: 'last-server-note-id',
   DIRTY: 'last-upload-failed',
+  ACTIVE_NOTEBOOK: 'notebook',
+  AVAILABLE_NOTEBOOKS: 'available-notebooks',
 };
 
 if (SiteNotes.WINDOWS) {
