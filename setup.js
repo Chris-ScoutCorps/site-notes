@@ -47,6 +47,16 @@ SiteNotes.debounce = (key, callback, timeout = 250) => {
   clearTimeout(SiteNotes.DEBOUNCES[key]);
   SiteNotes.DEBOUNCES[key] = setTimeout(callback, timeout);
 };
+SiteNotes.DECOLLIDES = {};
+SiteNotes.decollide = (key, callback, timeout = 250) => {
+  const now = new Date().getTime();
+  if (SiteNotes.DECOLLIDES[key] && (SiteNotes.DECOLLIDES[key] + timeout) > now) {
+    // do nothing
+  } else {
+    SiteNotes.DECOLLIDES[key] = now;
+    callback();
+  }
+};
 
 (async function populateBody() {
   const isPopup = !!document.querySelectorAll('#site-notes-body.popup').length;

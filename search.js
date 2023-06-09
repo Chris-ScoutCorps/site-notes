@@ -61,7 +61,7 @@
   const SEARCH_RESULTS = document.getElementById('search-results');
 
   const handleSearch = (_) => {
-    SiteNotes.debounce("refresh", async () => {
+    SiteNotes.decollide("refresh", async () => {
       await SiteNotes.API.refreshAllFromServer();
       await doSearch();
     }, 2500);

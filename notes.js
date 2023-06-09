@@ -49,6 +49,9 @@ SiteNotes.initNotes = function () {
     newNote.addEventListener('keyup', (e) => {
       updateNote(url, uuid, e.target.value);
     });
+    newNote.addEventListener('focus', (_) => {
+      SiteNotes.decollide("refresh", SiteNotes.API.refreshAllFromServer, 2500);
+    });
 
     const deleteButton = document.createElement('a');
     deleteButton.className = 'delete-a';
@@ -185,7 +188,7 @@ SiteNotes.initNotes = function () {
   }
 
   async function reload(justSynced) {
-    SiteNotes.debounce("reload", async () => {
+    SiteNotes.decollide("reload", async () => {
       if (!(DOMAIN_NOTES || PAGE_NOTES)) {
         return;
       }
