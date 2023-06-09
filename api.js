@@ -44,12 +44,20 @@
     }
   };
 
+  const checkDirty = async () => {
+    const dirty = (await SiteNotes.STORAGE.get(SiteNotes.SETTINGS_KEYS.DIRTY) || {})[SiteNotes.SETTINGS_KEYS.DIRTY] || false;
+    if (dirty) {
+      await SiteNotes.API.sync();
+    }
+  };
+
   SiteNotes.API = {
     refreshAllFromServer: async () => {
       try {
         const since = (await SiteNotes.STORAGE.get(SiteNotes.SETTINGS_KEYS.LAST_NOTE_ID) || {})[SiteNotes.SETTINGS_KEYS.LAST_NOTE_ID] || 0;
         const response = await (await fetch(`${API_URL}/get?since=${since}&session=${SESSION_ID}`, { method: 'GET', ...OPTS, })).json();
         await saveChanges(response);
+        checkDirty();
       } catch (e) {
         console.error(e, e.stack);
       }
@@ -63,6 +71,7 @@
           { method: 'GET', ...OPTS, }
         )).json();
         await saveChanges(response);
+        checkDirty();
       } catch (e) {
         console.error(e, e.stack);
       }
@@ -90,7 +99,9 @@
         )).json();
 
         await saveChanges(response, url, key);
+        checkDirty();
       } catch (e) {
+        await SiteNotes.STORAGE.set({ [SiteNotes.SETTINGS_KEYS.DIRTY]: true });
         console.error(e, e.stack);
       }
     },
@@ -113,7 +124,9 @@
         )).json();
 
         await saveChanges(response, url, key);
+        checkDirty();
       } catch (e) {
+        await SiteNotes.STORAGE.set({ [SiteNotes.SETTINGS_KEYS.DIRTY]: true });
         console.error(e, e.stack);
       }
     },
@@ -150,7 +163,9 @@
         )).json();
 
         await saveChanges(response);
+        await SiteNotes.STORAGE.set({ [SiteNotes.SETTINGS_KEYS.DIRTY]: false });
       } catch (e) {
+        await SiteNotes.STORAGE.set({ [SiteNotes.SETTINGS_KEYS.DIRTY]: true });
         console.error(e, e.stack);
       }
     },
