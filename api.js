@@ -3,13 +3,17 @@
 (async () => {
   const NOTES_API_URL = 'https://localhost:7227/Notes';
   const NOTEBOOKS_API_URL = 'https://localhost:7227/Notebooks';
-  const OPTS = {
+  const OPTS = async () => ({
     cache: 'no-cache',
     headers: {
       'Accept': 'application/json',
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + ((await getActiveNotebook()) || {}).key,
+      'Origin': 'site-notes-extension',
     },
-  };
+    withCredentials: true,
+    credentials: 'include',
+  });
 
   const saveChanges = async (response) => {
     const sites = Object.keys(response.notesBySite);
@@ -45,7 +49,15 @@
     }
   };
 
+  const getActiveNotebook = async () => (await SiteNotes.STORAGE.get(SiteNotes.SETTINGS_KEYS.ACTIVE_NOTEBOOK) || {})[SiteNotes.SETTINGS_KEYS.ACTIVE_NOTEBOOK] || null;
+  const getAvailableNotebooks = async () => (await SiteNotes.STORAGE.get(SiteNotes.SETTINGS_KEYS.AVAILABLE_NOTEBOOKS) || {})[SiteNotes.SETTINGS_KEYS.AVAILABLE_NOTEBOOKS] || [];
+
   const checkDirty = async () => {
+    const active = await getActiveNotebook();
+    if (!active.registered) {
+      await SiteNotes.API.ensureNotebook(active);
+    }
+
     const dirty = (await SiteNotes.STORAGE.get(SiteNotes.SETTINGS_KEYS.DIRTY) || {})[SiteNotes.SETTINGS_KEYS.DIRTY] || false;
     if (dirty) {
       await SiteNotes.API.sync();
@@ -56,7 +68,7 @@
     refreshAllFromServer: async () => {
       try {
         const since = (await SiteNotes.STORAGE.get(SiteNotes.SETTINGS_KEYS.LAST_NOTE_ID) || {})[SiteNotes.SETTINGS_KEYS.LAST_NOTE_ID] || 0;
-        const response = await (await fetch(`${NOTES_API_URL}/get?since=${since}&session=${SESSION_ID}`, { method: 'GET', ...OPTS, })).json();
+        const response = await (await fetch(`${NOTES_API_URL}/get?since=${since}&session=${SESSION_ID}`, { method: 'GET', ...(await OPTS()), })).json();
         await saveChanges(response);
         checkDirty();
       } catch (e) {
@@ -69,7 +81,7 @@
         const since = (await SiteNotes.STORAGE.get(SiteNotes.SETTINGS_KEYS.LAST_NOTE_ID) || {})[SiteNotes.SETTINGS_KEYS.LAST_NOTE_ID] || 0;
         const response = await (await fetch(
           `${NOTES_API_URL}/get?since=${since}&session=${SESSION_ID}&siteUrl=${encodeURIComponent(siteUrl)}&pageUrl=${encodeURIComponent(pageUrl)}`,
-          { method: 'GET', ...OPTS, }
+          { method: 'GET', ...(await OPTS()), }
         )).json();
         await saveChanges(response);
         checkDirty();
@@ -84,7 +96,7 @@
           `${NOTES_API_URL}/upsert`,
           {
             method: 'POST',
-            ...OPTS,
+            ...(await OPTS()),
             body: JSON.stringify({
               url,
               title,
@@ -113,7 +125,7 @@
           `${NOTES_API_URL}/delete`,
           {
             method: 'DELETE',
-            ...OPTS,
+            ...(await OPTS()),
             body: JSON.stringify({
               key,
               text,
@@ -138,7 +150,7 @@
           `${NOTES_API_URL}/sync`,
           {
             method: 'POST',
-            ...OPTS,
+            ...(await OPTS()),
             body: JSON.stringify({
               session: SESSION_ID,
               notesBySite:
@@ -171,65 +183,71 @@
       }
     },
 
-    registerNotebook: async (id) => {
-      const available = (await SiteNotes.STORAGE.get(SiteNotes.SETTINGS_KEYS.AVAILABLE_NOTEBOOKS) || {})[SiteNotes.SETTINGS_KEYS.AVAILABLE_NOTEBOOKS] || [];
-      const notebook = available.filter(n => n.id === id)[0];
+    ensureNotebook: async (notebook) => {
+      try {
+        console.log(await OPTS());
+        const status = (await fetch(
+          `${NOTEBOOKS_API_URL}/create`,
+          {
+            method: 'PUT',
+            ...(await OPTS()),
+            body: JSON.stringify(notebook.name),
+          }
+        )).status;
 
-      if (!notebook.key) {
-        try {
-          const response = await (await fetch(
-            `${NOTEBOOKS_API_URL}/register`,
-            {
-              method: 'POST',
-              ...OPTS,
-              body: JSON.stringify(notebook),
-            }
-          )).json();
-
-          notebook.key = response.key;
+        if (status === 200) {
+          const available = await getAvailableNotebooks();
+          available.find(n => n.key === notebook.key).registered = true;
           await SiteNotes.STORAGE.set({ [SiteNotes.SETTINGS_KEYS.AVAILABLE_NOTEBOOKS]: available });
 
-          const active = (await SiteNotes.STORAGE.get(SiteNotes.SETTINGS_KEYS.ACTIVE_NOTEBOOK) || {})[SiteNotes.SETTINGS_KEYS.ACTIVE_NOTEBOOK] || {};
-          if (active.id === notebook.id) {
-            await SiteNotes.STORAGE.set({ [SiteNotes.SETTINGS_KEYS.ACTIVE_NOTEBOOK]: notebook });
+          const active = await getActiveNotebook();
+          if (active && active.key === notebook.key) {
+            active.registered = true;
+            await SiteNotes.STORAGE.set({ [SiteNotes.SETTINGS_KEYS.ACTIVE_NOTEBOOK]: active });
           }
-        } catch (e) {
-          console.error(e, e.stack);
         }
+      } catch (e) {
+        console.error(e, e.stack);
       }
     },
   };
 
-  SiteNotes.API.refreshAllFromServer();
-
   //TODO:
-  // - server register: if the notebook doesn't exist or has no key, give them a key (otherwise fail)
+  // - server register: if the notebook doesn't exist, create it
   // - server: change user to notebook id
-  // - every request requires notebook id and key
+  // - every request requires notebook key
   // - show list of notebooks and keys (hidden)
   // - open notebook (requires key)
-  // - rename notebook (requires key and id)
+  //   - does a sync and clears local storage
+  // - create notebook
+  // - rename notebook (requires key)
 
-  (async function initNotebooks() {
-    const active = (await SiteNotes.STORAGE.get(SiteNotes.SETTINGS_KEYS.ACTIVE_NOTEBOOK) || {})[SiteNotes.SETTINGS_KEYS.ACTIVE_NOTEBOOK] || null;
-    const available = (await SiteNotes.STORAGE.get(SiteNotes.SETTINGS_KEYS.AVAILABLE_NOTEBOOKS) || {})[SiteNotes.SETTINGS_KEYS.AVAILABLE_NOTEBOOKS] || [];
+  //await SiteNotes.STORAGE.set({ [SiteNotes.SETTINGS_KEYS.AVAILABLE_NOTEBOOKS]: [] });
+  //await SiteNotes.STORAGE.set({ [SiteNotes.SETTINGS_KEYS.ACTIVE_NOTEBOOK]: null });
+
+  await (async function initNotebooks() {
+    const available = await getAvailableNotebooks();
 
     if (available.length === 0) {
       available.push({
-        id: uuidv4(),
         name: 'New Notebook',
-        key: null,
+        key: crypto.randomUUID(),
+        registered: false,
       });
       await SiteNotes.STORAGE.set({ [SiteNotes.SETTINGS_KEYS.AVAILABLE_NOTEBOOKS]: available });
     }
 
-    if (active) {
-      SiteNotes.API.registerNotebook(active.id);
-    } else {
-      SiteNotes.API.registerNotebook(available[0].id);
-      await SiteNotes.STORAGE.set({ [SiteNotes.SETTINGS_KEYS.ACTIVE_NOTEBOOK]: available[0] });
+    let active = await getActiveNotebook();
+    if (!active) {
+      active = available[0];
+      await SiteNotes.STORAGE.set({ [SiteNotes.SETTINGS_KEYS.ACTIVE_NOTEBOOK]: active });
     }
 
+    if (!active.registered) {
+      await SiteNotes.API.ensureNotebook(active);
+    }
   })();
+
+  SiteNotes.API.refreshAllFromServer();
 
 })();
