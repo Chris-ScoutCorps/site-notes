@@ -143,12 +143,22 @@ SiteNotes.decollide = (key, callback, timeout = 250) => {
     <h4 id="page-notes-lbl" style="width: 100%;"></h4>
     <div id="page-notes" style="width: 100%;"></div>
 
-    <div style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid lightgray; margin-top: 12px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid lightgray; margin-top: 12px;" id="active-notebook-area">
       <div style="flex: 1;">
         <select id="notebooks-select">
         </select>
+        
+        <a href='#' id="rename-notebook-button" style="text-decoration: none; font-size: 2em;" alt="Rename Notebook" title="Rename Notebook">&#x270e;</a>
+        <a href='#' id="open-notebook-button" style="text-decoration: none; font-size: 2em;" alt="Open Notebook" title="Open Notebook">&#x1F513;</a>
+        <a href='#' id="create-notebook-button" style="text-decoration: none; font-size: 2em;" alt="Create Notebook" title="Create Notebook">+</a>
       </div>
-      <a href='#' id="refresh-button" style="text-decoration: none; font-size: 2em;">&#8635;</a>
+      <a href='#' id="refresh-button" style="text-decoration: none; font-size: 2em;" alt="Sync" title="Sync">&#8635;</a>
+    </div>
+
+    <div style="display: none; border-top: 1px solid lightgray; margin-top: 12px;" id="rename-notebook-area">
+      <input id="notebook-name" type="text" />
+      <a href='#' id="rename-notebook-confirm" style="text-decoration: none; font-size: 2em; color: green;" alt="Rename Notebook" title="Rename Notebook">&#10004;</a>
+      <a href='#' id="rename-notebook-cancel" style="text-decoration: none; font-size: 2em; color: red;" alt="Cancel" title="Cancel">x</a>
     </div>
   `;
   }
@@ -192,6 +202,45 @@ const SESSION_ID = uuidv4();
 
 const getActiveNotebook = async () => (await SiteNotes.STORAGE.get(SiteNotes.SETTINGS_KEYS.ACTIVE_NOTEBOOK) || {})[SiteNotes.SETTINGS_KEYS.ACTIVE_NOTEBOOK] || null;
 const getAvailableNotebooks = async () => (await SiteNotes.STORAGE.get(SiteNotes.SETTINGS_KEYS.AVAILABLE_NOTEBOOKS) || {})[SiteNotes.SETTINGS_KEYS.AVAILABLE_NOTEBOOKS] || [];
+
+const populateNotebooksDropDown = async () => {
+  document.getElementById('notebooks-select').innerHTML = '';
+  const notebooks = await getAvailableNotebooks();
+  const active = await getActiveNotebook();
+  notebooks.forEach(notebook => {
+    const opt = document.createElement('option');
+    opt.text = notebook.name;
+    opt.value = notebook.key;
+    opt.selected = notebook.key === active.key;
+    document.getElementById('notebooks-select').appendChild(opt);
+  });
+};
+
+(function initNotebooksButtons() {
+  document.getElementById('rename-notebook-button').addEventListener('click', async () => {
+    document.getElementById('active-notebook-area').style.display = 'none';
+    document.getElementById('rename-notebook-area').style.display = 'block';
+    document.getElementById('notebook-name').value = (await getActiveNotebook()).name;
+  });
+  document.getElementById('rename-notebook-confirm').addEventListener('click', async () => {
+    document.getElementById('active-notebook-area').style.display = 'flex';
+    document.getElementById('rename-notebook-area').style.display = 'none';
+
+    const active = await getActiveNotebook();
+    const available = await getAvailableNotebooks();
+    active.name = document.getElementById('notebook-name').value;
+    available.find(a => a.key === active.key).name = active.name;
+
+    await SiteNotes.STORAGE.set({ [SiteNotes.SETTINGS_KEYS.ACTIVE_NOTEBOOK]: active });
+    await SiteNotes.STORAGE.set({ [SiteNotes.SETTINGS_KEYS.AVAILABLE_NOTEBOOKS]: available });
+    await SiteNotes.API.renameNotebook(active);
+    await populateNotebooksDropDown();
+  });
+  document.getElementById('rename-notebook-cancel').addEventListener('click', () => {
+    document.getElementById('active-notebook-area').style.display = 'flex';
+    document.getElementById('rename-notebook-area').style.display = 'none';
+  });
+})();
 
 (async function migrations() {
   await (async function v1() {
