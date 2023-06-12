@@ -252,6 +252,16 @@ SiteNotes.initNotes = function () {
           }
         }
       }
+
+      const notebooks = await getAvailableNotebooks();
+      const active = await getActiveNotebook();
+      notebooks.forEach(notebook => {
+        const opt = document.createElement('option');
+        opt.text = notebook.name;
+        opt.value = notebook.key;
+        opt.selected = notebook.key === active.key;
+        document.getElementById('notebooks-select').appendChild(opt);
+      });
     });
   }
 

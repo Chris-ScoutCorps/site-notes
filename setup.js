@@ -144,7 +144,10 @@ SiteNotes.decollide = (key, callback, timeout = 250) => {
     <div id="page-notes" style="width: 100%;"></div>
 
     <div style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid lightgray; margin-top: 12px;">
-      <div style="flex: 1;"> </div>
+      <div style="flex: 1;">
+        <select id="notebooks-select">
+        </select>
+      </div>
       <a href='#' id="refresh-button" style="text-decoration: none; font-size: 2em;">&#8635;</a>
     </div>
   `;
@@ -186,6 +189,9 @@ function uuidv4() {
   );
 }
 const SESSION_ID = uuidv4();
+
+const getActiveNotebook = async () => (await SiteNotes.STORAGE.get(SiteNotes.SETTINGS_KEYS.ACTIVE_NOTEBOOK) || {})[SiteNotes.SETTINGS_KEYS.ACTIVE_NOTEBOOK] || null;
+const getAvailableNotebooks = async () => (await SiteNotes.STORAGE.get(SiteNotes.SETTINGS_KEYS.AVAILABLE_NOTEBOOKS) || {})[SiteNotes.SETTINGS_KEYS.AVAILABLE_NOTEBOOKS] || [];
 
 (async function migrations() {
   await (async function v1() {

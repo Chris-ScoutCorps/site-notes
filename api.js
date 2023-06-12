@@ -3,12 +3,12 @@
 (async () => {
   const NOTES_API_URL = 'https://localhost:7227/Notes';
   const NOTEBOOKS_API_URL = 'https://localhost:7227/Notebooks';
-  const OPTS = async () => ({
+  const OPTS = async (notebook) => ({
     cache: 'no-cache',
     headers: {
       'Accept': 'application/json',
       'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + ((await getActiveNotebook()) || {}).key,
+      'Authorization': 'Bearer ' + (notebook || (await getActiveNotebook()) || {}).key,
       'Origin': 'site-notes-extension',
     },
     withCredentials: true,
@@ -48,9 +48,6 @@
       await SiteNotes.STORAGE.set({ [SiteNotes.SETTINGS_KEYS.LAST_NOTE_ID]: response.since });
     }
   };
-
-  const getActiveNotebook = async () => (await SiteNotes.STORAGE.get(SiteNotes.SETTINGS_KEYS.ACTIVE_NOTEBOOK) || {})[SiteNotes.SETTINGS_KEYS.ACTIVE_NOTEBOOK] || null;
-  const getAvailableNotebooks = async () => (await SiteNotes.STORAGE.get(SiteNotes.SETTINGS_KEYS.AVAILABLE_NOTEBOOKS) || {})[SiteNotes.SETTINGS_KEYS.AVAILABLE_NOTEBOOKS] || [];
 
   const checkDirty = async () => {
     const active = await getActiveNotebook();
@@ -185,12 +182,11 @@
 
     ensureNotebook: async (notebook) => {
       try {
-        console.log(await OPTS());
         const status = (await fetch(
           `${NOTEBOOKS_API_URL}/create`,
           {
             method: 'PUT',
-            ...(await OPTS()),
+            ...(await OPTS(notebook)),
             body: JSON.stringify(notebook.name),
           }
         )).status;
@@ -210,12 +206,39 @@
         console.error(e, e.stack);
       }
     },
+
+    renameNotebook: async (notebook) => {
+      try {
+        await fetch(
+          `${NOTEBOOKS_API_URL}/rename`,
+          {
+            method: 'PATCH',
+            ...(await OPTS(notebook)),
+            body: JSON.stringify(notebook.name),
+          }
+        );
+      } catch (e) {
+        console.error(e, e.stack);
+      }
+    },
+
+    canOpenNotebook: async (notebook) => {
+      try {
+        return (await fetch(
+          `${NOTEBOOKS_API_URL}/open`,
+          {
+            method: 'GET',
+            ...(await OPTS(notebook)),
+          }
+        )).status === 200;
+      } catch (e) {
+        console.error(e, e.stack);
+      }
+    },
   };
 
   //TODO:
-  // - server register: if the notebook doesn't exist, create it
   // - server: change user to notebook id
-  // - every request requires notebook key
   // - show list of notebooks and keys (hidden)
   // - open notebook (requires key)
   //   - does a sync and clears local storage
