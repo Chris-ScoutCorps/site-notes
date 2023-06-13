@@ -18,7 +18,6 @@ const IS_CHROME = (() => {
 
 const SiteNotes = IS_CHROME ? {
   IS_CHROME: true,
-  SIDEBAR_OPEN: 'site-notes-sidebar-open',
   SIDEBAR_TOGGLE_ID: 'sidebar-toggle-button',
   STORAGE: chrome.storage.local,
   TABS: chrome.tabs,
@@ -31,8 +30,14 @@ const SiteNotes = IS_CHROME ? {
   WINDOWS: browser.windows,
   WINDOW_ID: undefined,
 }
-
-const SETTINGS_KEYS = ['site-notes-sidebar-open'];
+SiteNotes.VERSION = 1;
+SiteNotes.SETTINGS_KEYS = {
+  SIDEBAR_OPEN: 'site-notes-sidebar-open',
+  LAST_NOTE_ID: 'last-server-note-id',
+  DIRTY: 'last-upload-failed',
+  ACTIVE_NOTEBOOK: 'notebook',
+  AVAILABLE_NOTEBOOKS: 'available-notebooks',
+};
 
 if (SiteNotes.WINDOWS) {
   SiteNotes.WINDOWS.getCurrent({ populate: true }).then((windowInfo) => {
@@ -44,6 +49,16 @@ SiteNotes.DEBOUNCES = {};
 SiteNotes.debounce = (key, callback, timeout = 250) => {
   clearTimeout(SiteNotes.DEBOUNCES[key]);
   SiteNotes.DEBOUNCES[key] = setTimeout(callback, timeout);
+};
+SiteNotes.DECOLLIDES = {};
+SiteNotes.decollide = (key, callback, timeout = 250) => {
+  const now = new Date().getTime();
+  if (SiteNotes.DECOLLIDES[key] && (SiteNotes.DECOLLIDES[key] + timeout) > now) {
+    // do nothing
+  } else {
+    SiteNotes.DECOLLIDES[key] = now;
+    callback();
+  }
 };
 
 (async function populateBody() {
@@ -127,11 +142,30 @@ SiteNotes.debounce = (key, callback, timeout = 250) => {
 
     <h4 id="page-notes-lbl" style="width: 100%;"></h4>
     <div id="page-notes" style="width: 100%;"></div>
+
+    <div style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid lightgray; margin-top: 12px;" id="active-notebook-area">
+      <div style="flex: 1;">
+        <select id="notebooks-select">
+        </select>
+        
+        <a href='#' id="rename-notebook-button" style="text-decoration: none; font-size: 2em;" alt="Rename Notebook" title="Rename Notebook">&#x270e;</a>
+        <a href='#' id="open-notebook-button" style="text-decoration: none; font-size: 2em;" alt="Open Notebook" title="Open Notebook">&#x1F513;</a>
+        <a href='#' id="copy-notebook-button" style="text-decoration: none; font-size: 2em;" alt="Copy Key for this Notebook" title="Copy Key for this Notebook">&#128273;</a>
+        <a href='#' id="create-notebook-button" style="text-decoration: none; font-size: 2em;" alt="Create Notebook" title="Create Notebook">+</a>
+      </div>
+      <a href='#' id="refresh-button" style="text-decoration: none; font-size: 2em;" alt="Sync" title="Sync">&#8635;</a>
+    </div>
+
+    <div style="display: none; border-top: 1px solid lightgray; margin-top: 12px;" id="edit-notebook-area">
+      <input id="notebook-name-or-key" type="text" />
+      <a href='#' id="edit-notebook-confirm" style="text-decoration: none; font-size: 2em; color: green;" alt="Rename Notebook" title="Rename Notebook">&#10004;</a>
+      <a href='#' id="edit-notebook-cancel" style="text-decoration: none; font-size: 2em; color: red;" alt="Cancel" title="Cancel">x</a>
+    </div>
   `;
   }
 
   if (SiteNotes.IS_CHROME) {
-    const isOpen = async () => ((await SiteNotes.STORAGE.get(SiteNotes.SIDEBAR_OPEN)) || {})[SiteNotes.SIDEBAR_OPEN] === true;
+    const isOpen = async () => ((await SiteNotes.STORAGE.get(SiteNotes.SETTINGS_KEYS.SIDEBAR_OPEN)) || {})[SiteNotes.SETTINGS_KEYS.SIDEBAR_OPEN] === true;
 
     if (isSidebar || isPopup) {
       const button = document.getElementById(SiteNotes.SIDEBAR_TOGGLE_ID);
@@ -140,7 +174,7 @@ SiteNotes.debounce = (key, callback, timeout = 250) => {
 
       button.addEventListener("click", async () => {
         await SiteNotes.STORAGE.set({
-          [SiteNotes.SIDEBAR_OPEN]: !(await isOpen()),
+          [SiteNotes.SETTINGS_KEYS.SIDEBAR_OPEN]: !(await isOpen()),
         });
         button.value = `sidebar ${(await isOpen()) ? ' >' : ' <'}`
       });
@@ -167,17 +201,124 @@ function uuidv4() {
 }
 const SESSION_ID = uuidv4();
 
+const getActiveNotebook = async () => (await SiteNotes.STORAGE.get(SiteNotes.SETTINGS_KEYS.ACTIVE_NOTEBOOK) || {})[SiteNotes.SETTINGS_KEYS.ACTIVE_NOTEBOOK] || null;
+const getAvailableNotebooks = async () => (await SiteNotes.STORAGE.get(SiteNotes.SETTINGS_KEYS.AVAILABLE_NOTEBOOKS) || {})[SiteNotes.SETTINGS_KEYS.AVAILABLE_NOTEBOOKS] || [];
+
+const populateNotebooksDropDown = async () => {
+  document.getElementById('notebooks-select').innerHTML = '';
+  const notebooks = await getAvailableNotebooks();
+  const active = await getActiveNotebook();
+  notebooks.forEach(notebook => {
+    const opt = document.createElement('option');
+    opt.text = notebook.name;
+    opt.value = notebook.key;
+    opt.selected = notebook.key === active.key;
+    document.getElementById('notebooks-select').appendChild(opt);
+  });
+};
+
+(function initNotebooksButtons() {
+  const switchNotebook = async () => {
+    const stored = await SiteNotes.STORAGE.get();
+    const toRem = Object.keys(stored).filter(k => !Object.values(SiteNotes.SETTINGS_KEYS).includes(k));
+    await SiteNotes.STORAGE.remove(toRem);
+    await SiteNotes.STORAGE.set({ [SiteNotes.SETTINGS_KEYS.LAST_NOTE_ID]: 0 });
+    await SiteNotes.API.refreshAllFromServer();
+    await SiteNotes.reload(true);
+  };
+
+  document.getElementById('notebooks-select').addEventListener('change', async () => {
+    const key = document.getElementById('notebooks-select').options[document.getElementById('notebooks-select').selectedIndex].value;
+    const available = await getAvailableNotebooks();
+    await SiteNotes.STORAGE.set({ [SiteNotes.SETTINGS_KEYS.ACTIVE_NOTEBOOK]: available.filter(a => a.key === key)[0] });
+    await switchNotebook();
+  });
+
+  document.getElementById('rename-notebook-button').addEventListener('click', async () => {
+    document.getElementById('active-notebook-area').style.display = 'none';
+    document.getElementById('edit-notebook-area').style.display = 'block';
+    document.getElementById('edit-notebook-area').setAttribute('data-mode', 'rename');
+    document.getElementById('notebook-name-or-key').setAttribute('placeholder', 'Notebook Name');
+    document.getElementById('notebook-name-or-key').value = (await getActiveNotebook()).name;
+  });
+
+  document.getElementById('create-notebook-button').addEventListener('click', async () => {
+    document.getElementById('active-notebook-area').style.display = 'none';
+    document.getElementById('edit-notebook-area').style.display = 'block';
+    document.getElementById('edit-notebook-area').setAttribute('data-mode', 'create');
+    document.getElementById('notebook-name-or-key').setAttribute('placeholder', 'Notebook Name');
+    document.getElementById('notebook-name-or-key').value = '';
+  });
+
+  document.getElementById('copy-notebook-button').addEventListener('click', async () => {
+    const selected = document.getElementById('notebooks-select').options[document.getElementById('notebooks-select').selectedIndex];
+    alert(`The key "${selected.value}" for notebook "${selected.text}" has been copied to the clipboard`);
+    navigator.clipboard.writeText(selected.value);
+  });
+
+  document.getElementById('open-notebook-button').addEventListener('click', async () => {
+    document.getElementById('active-notebook-area').style.display = 'none';
+    document.getElementById('edit-notebook-area').style.display = 'block';
+    document.getElementById('edit-notebook-area').setAttribute('data-mode', 'open');
+    document.getElementById('notebook-name-or-key').setAttribute('placeholder', 'Enter or Paste Key Here');
+    document.getElementById('notebook-name-or-key').value = '';
+  });
+
+  document.getElementById('edit-notebook-confirm').addEventListener('click', async () => {
+    document.getElementById('active-notebook-area').style.display = 'flex';
+    document.getElementById('edit-notebook-area').style.display = 'none';
+
+    const mode = document.getElementById('edit-notebook-area').getAttribute('data-mode');
+    let active = await getActiveNotebook();
+    const available = await getAvailableNotebooks();
+
+    if (mode === 'rename') {
+      active.name = document.getElementById('notebook-name-or-key').value;
+      available.find(a => a.key === active.key).name = active.name;
+    } else if (mode === 'create') {
+      active = {
+        name: document.getElementById('notebook-name-or-key').value,
+        key: crypto.randomUUID(),
+        registered: false,
+      };
+      available.push(active);
+    }
+
+    if (mode === 'rename' || mode === 'create') {
+      await SiteNotes.STORAGE.set({ [SiteNotes.SETTINGS_KEYS.ACTIVE_NOTEBOOK]: active });
+      await SiteNotes.STORAGE.set({ [SiteNotes.SETTINGS_KEYS.AVAILABLE_NOTEBOOKS]: available });
+    }
+
+    if (mode === 'rename') {
+      await SiteNotes.API.renameNotebook(active);
+    } else if (mode === 'create') {
+      await SiteNotes.API.ensureNotebook(active);
+      await switchNotebook();
+    } else if (mode === 'open') {
+      await SiteNotes.API.openNotebook(document.getElementById('notebook-name-or-key').value);
+      await switchNotebook();
+    }
+
+    await populateNotebooksDropDown();
+  });
+
+  document.getElementById('edit-notebook-cancel').addEventListener('click', () => {
+    document.getElementById('active-notebook-area').style.display = 'flex';
+    document.getElementById('edit-notebook-area').style.display = 'none';
+  });
+})();
+
 (async function migrations() {
   await (async function v1() {
     const stored = await SiteNotes.STORAGE.get();
     const toStore = {};
     const toRem = [];
     for (const key of Object.keys(stored).filter(
-      k => !k.startsWith('sorts|') && !SETTINGS_KEYS.includes(k) && !stored[k].v
+      k => !k.startsWith('sorts|') && !Object.values(SiteNotes.SETTINGS_KEYS).includes(k) && !stored[k].v
     )) {
       const value = stored[key];
       toStore[key] = {
-        v: 1,
+        v: SiteNotes.VERSION,
         title: value['title'],
         titleUrl: value['title-url'],
         notes: Object.keys(value)

@@ -8,7 +8,7 @@ SiteNotes.initNotes = function () {
   const PAGE_NOTES = document.getElementById('page-notes');
 
   async function getOrDefault(url) {
-    return (await SiteNotes.STORAGE.get(url) || {})[url] || { v: 1, sorts: [], notes: {} };
+    return (await SiteNotes.STORAGE.get(url) || {})[url] || { v: SiteNotes.VERSION, notes: {} };
   }
 
   function appendAddNoteButton(el, url, before) {
@@ -48,6 +48,9 @@ SiteNotes.initNotes = function () {
     newNote.title = `Created ${note.created} | Updated: ${note.updated || '--'}`;
     newNote.addEventListener('keyup', (e) => {
       updateNote(url, uuid, e.target.value);
+    });
+    newNote.addEventListener('focus', (_) => {
+      SiteNotes.decollide("refresh", SiteNotes.API.refreshAllFromServer, 2500);
     });
 
     const deleteButton = document.createElement('a');
@@ -98,24 +101,37 @@ SiteNotes.initNotes = function () {
       created: (new Date().toLocaleString()),
       updated: null,
       session: SESSION_ID,
-      number: 1,
+      number: 0,
     };
     appendNote(el, url, newId, note, before ? el.querySelectorAll(`[note-id='${before}']`)[0] : null);
 
-    const stored = await getOrDefault(url);
+    const data = await updateTitle(await getOrDefault(url));
 
-    const found = stored.sorts.indexOf(before);
-    if (found !== -1) {
-      stored.sorts.splice(found, 0, newId);
+    if (before) {
+      const sortBefore = data.notes[before].sortOrder;
+      const sortAfter = Object.values(data.notes).reduce((acc, note) => note.sortOrder < sortBefore && note.sortOrder > acc ? note.sortOrder : acc, -10000000);
+      note.sortOrder = (sortBefore + sortAfter) / 2;
     } else {
-      stored.sorts.push(newId);
+      const sortAfter = Object.values(data.notes).reduce((acc, note) => note.sortOrder > acc ? note.sortOrder : acc, -10000000);
+      note.sortOrder = sortAfter + 1000000;
     }
 
-    SiteNotes.STORAGE.set({
+    SiteNotes.API.upsertNote(
+      url,
+      data.title,
+      data.titleUrl,
+      newId,
+      note.text,
+      note.session,
+      note.number,
+      note.sortOrder
+    );
+
+    await SiteNotes.STORAGE.set({
       [url]: {
-        ...(await updateTitle(stored)),
+        ...data,
         notes: {
-          ...stored.notes,
+          ...data.notes,
           [newId]: note,
         },
       }
@@ -128,30 +144,42 @@ SiteNotes.initNotes = function () {
 
     const stored = await getOrDefault(url);
 
+    SiteNotes.API.deleteNote(url, uuid, stored.notes[uuid].text, stored.notes[uuid].session, stored.notes[uuid].number);
+
     delete stored.notes[uuid];
     if (!Object.keys(stored.notes).length) {
-      SiteNotes.STORAGE.remove(url);
+      await SiteNotes.STORAGE.remove(url);
     } else {
-      stored.sorts = stored.sorts.filter(x => x !== uuid);
-      SiteNotes.STORAGE.set({ [url]: stored });
+      await SiteNotes.STORAGE.set({ [url]: stored });
     }
   }
 
   async function updateNote(url, uuid, newNote) {
     SiteNotes.debounce(`update-${uuid}`, async () => {
-      const stored = await getOrDefault(url);
+      const data = await updateTitle(await getOrDefault(url));
 
-      SiteNotes.STORAGE.set({
+      SiteNotes.API.upsertNote(
+        url,
+        data.title,
+        data.titleUrl,
+        uuid,
+        newNote,
+        data.notes[uuid].session,
+        data.notes[uuid].number + 1,
+        data.notes[uuid].sortOrder
+      );
+
+      await SiteNotes.STORAGE.set({
         [url]: {
-          ...(await updateTitle(stored)),
+          ...data,
           notes: {
-            ...stored.notes,
+            ...data.notes,
             [uuid]: {
-              ...stored.notes[uuid],
+              ...data.notes[uuid],
               text: newNote,
               updated: (new Date().toLocaleString()),
               session: SESSION_ID,
-              number: stored.notes[uuid].number + 1,
+              number: data.notes[uuid].number + 1,
             },
           },
         }
@@ -159,8 +187,9 @@ SiteNotes.initNotes = function () {
     });
   }
 
-  async function reload() {
-    SiteNotes.debounce("reload", async () => {
+  SiteNotes.reload = async (justSynced) => {
+    SiteNotes.decollide("reload", async () => {
+      console.log(await SiteNotes.STORAGE.get())
       if (!(DOMAIN_NOTES || PAGE_NOTES)) {
         return;
       }
@@ -173,13 +202,20 @@ SiteNotes.initNotes = function () {
       const domain = url.hostname ? url.hostname : (url.protocol + url.pathname);
       const pagepath = url.hostname ? (url.hostname + url.pathname) : url.href;
 
+      if (!justSynced) {
+        await SiteNotes.API.refreshFromServer(domain, pagepath);
+      }
+
       if (DOMAIN_NOTES) {
         DOMAIN_NOTES.innerHTML = '';
 
         DOMAIN_NOTES_LBL.innerText = domain;
         const stored = await getOrDefault(domain);
 
-        stored.sorts.forEach(k => {
+        const sorted = Object.keys(stored.notes);
+        sorted.sort((a, b) => stored.notes[a].sortOrder - stored.notes[b].sortOrder);
+
+        sorted.forEach(k => {
           appendNote(DOMAIN_NOTES, domain, k, stored.notes[k]);
         });
         appendAddNoteButton(DOMAIN_NOTES, domain, null);
@@ -201,7 +237,10 @@ SiteNotes.initNotes = function () {
           PAGE_NOTES_LBL.innerText = pagepath.replace(domain, '');
           const stored = await getOrDefault(pagepath);
 
-          stored.sorts.forEach(k => {
+          const sorted = Object.keys(stored.notes);
+          sorted.sort((a, b) => stored.notes[a].sortOrder - stored.notes[b].sortOrder);
+
+          sorted.forEach(k => {
             appendNote(PAGE_NOTES, pagepath, k, stored.notes[k]);
           });
           appendAddNoteButton(PAGE_NOTES, pagepath, null);
@@ -214,18 +253,33 @@ SiteNotes.initNotes = function () {
           }
         }
       }
+
+      await populateNotebooksDropDown();
     });
   }
 
-  reload().then(() => {
+  SiteNotes.reload().then(() => {
     if (SiteNotes.TABS) {
-      SiteNotes.TABS.onActivated.addListener(reload);
+      SiteNotes.TABS.onActivated.addListener(SiteNotes.reload);
       SiteNotes.TABS.onUpdated.addListener((_, update) => {
         if (update.url) {
-          reload();
+          SiteNotes.reload();
         }
       });
     }
+  });
+
+  document.getElementById('refresh-button').addEventListener('click', async () => {
+    if (DOMAIN_NOTES) {
+      DOMAIN_NOTES.innerHTML = '';
+    }
+    if (PAGE_NOTES) {
+      PAGE_NOTES.innerHTML = '';
+    }
+
+    await SiteNotes.API.sync();
+
+    await SiteNotes.reload(true);
   });
 };
 

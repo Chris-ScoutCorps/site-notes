@@ -16,7 +16,7 @@
     "default_popup": "popup/popup.html"
   },
 
-  "permissions": [ "storage", "tabs" ],
+  "permissions": [ "storage", "tabs", "webRequest" ],
 
   "content_scripts": [
     {
@@ -26,7 +26,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": [ "styles.css", "sidebar/sidebar.html", "setup.js", "notes.js", "search.js" ],
+      "resources": [ "styles.css", "sidebar/sidebar.html", "api.js", "setup.js", "notes.js", "search.js" ],
       "matches": [ "http://*/*", "https://*/*" ]
     }
   ]
