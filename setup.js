@@ -218,10 +218,20 @@ const populateNotebooksDropDown = async () => {
 };
 
 (function initNotebooksButtons() {
+  const switchNotebook = async () => {
+    const stored = await SiteNotes.STORAGE.get();
+    const toRem = Object.keys(stored).filter(k => !Object.values(SiteNotes.SETTINGS_KEYS).includes(k));
+    await SiteNotes.STORAGE.remove(toRem);
+    await SiteNotes.STORAGE.set({ [SiteNotes.SETTINGS_KEYS.LAST_NOTE_ID]: 0 });
+    await SiteNotes.API.refreshAllFromServer();
+    await SiteNotes.reload(true);
+  };
+
   document.getElementById('notebooks-select').addEventListener('change', async () => {
     const key = document.getElementById('notebooks-select').options[document.getElementById('notebooks-select').selectedIndex].value;
     const available = await getAvailableNotebooks();
     await SiteNotes.STORAGE.set({ [SiteNotes.SETTINGS_KEYS.ACTIVE_NOTEBOOK]: available.filter(a => a.key === key)[0] });
+    await switchNotebook();
   });
 
   document.getElementById('rename-notebook-button').addEventListener('click', async () => {
@@ -283,8 +293,10 @@ const populateNotebooksDropDown = async () => {
       await SiteNotes.API.renameNotebook(active);
     } else if (mode === 'create') {
       await SiteNotes.API.ensureNotebook(active);
+      await switchNotebook();
     } else if (mode === 'open') {
       await SiteNotes.API.openNotebook(document.getElementById('notebook-name-or-key').value);
+      await switchNotebook();
     }
 
     await populateNotebooksDropDown();

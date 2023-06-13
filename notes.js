@@ -187,8 +187,9 @@ SiteNotes.initNotes = function () {
     });
   }
 
-  async function reload(justSynced) {
+  SiteNotes.reload = async (justSynced) => {
     SiteNotes.decollide("reload", async () => {
+      console.log(await SiteNotes.STORAGE.get())
       if (!(DOMAIN_NOTES || PAGE_NOTES)) {
         return;
       }
@@ -257,12 +258,12 @@ SiteNotes.initNotes = function () {
     });
   }
 
-  reload().then(() => {
+  SiteNotes.reload().then(() => {
     if (SiteNotes.TABS) {
-      SiteNotes.TABS.onActivated.addListener(reload);
+      SiteNotes.TABS.onActivated.addListener(SiteNotes.reload);
       SiteNotes.TABS.onUpdated.addListener((_, update) => {
         if (update.url) {
-          reload();
+          SiteNotes.reload();
         }
       });
     }
@@ -278,7 +279,7 @@ SiteNotes.initNotes = function () {
 
     await SiteNotes.API.sync();
 
-    await reload(true);
+    await SiteNotes.reload(true);
   });
 };
 

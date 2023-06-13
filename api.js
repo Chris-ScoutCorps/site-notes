@@ -250,10 +250,6 @@
     },
   };
 
-  //TODO:
-  // - server: change user to notebook id
-  // - open notebook does a sync and clears local storage
-
   //await SiteNotes.STORAGE.set({ [SiteNotes.SETTINGS_KEYS.AVAILABLE_NOTEBOOKS]: [] });
   //await SiteNotes.STORAGE.set({ [SiteNotes.SETTINGS_KEYS.ACTIVE_NOTEBOOK]: null });
 
