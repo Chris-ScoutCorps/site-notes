@@ -222,15 +222,28 @@
       }
     },
 
-    canOpenNotebook: async (notebook) => {
+    openNotebook: async (key) => {
       try {
-        return (await fetch(
+        const response = await fetch(
           `${NOTEBOOKS_API_URL}/open`,
           {
             method: 'GET',
-            ...(await OPTS(notebook)),
+            ...(await OPTS({ key })),
           }
-        )).status === 200;
+        );
+        
+        if (response.status === 200) {
+          const available = await getAvailableNotebooks();
+          const active = {
+            key,
+            name: await response.json(),
+            registered: true,
+          };
+          await SiteNotes.STORAGE.set({ [SiteNotes.SETTINGS_KEYS.AVAILABLE_NOTEBOOKS]: available.filter(a => a.key !== key).concat([active]) });
+          await SiteNotes.STORAGE.set({ [SiteNotes.SETTINGS_KEYS.ACTIVE_NOTEBOOK]: active });
+        } else {
+          alert('Could not open notebook - are you sure this is a valid key?');
+        }
       } catch (e) {
         console.error(e, e.stack);
       }
@@ -239,9 +252,7 @@
 
   //TODO:
   // - server: change user to notebook id
-  // - show list of notebooks and keys (hidden)
-  // - open notebook (requires key)
-  //   - does a sync and clears local storage
+  // - open notebook does a sync and clears local storage
 
   //await SiteNotes.STORAGE.set({ [SiteNotes.SETTINGS_KEYS.AVAILABLE_NOTEBOOKS]: [] });
   //await SiteNotes.STORAGE.set({ [SiteNotes.SETTINGS_KEYS.ACTIVE_NOTEBOOK]: null });
