@@ -242,8 +242,6 @@
   // - show list of notebooks and keys (hidden)
   // - open notebook (requires key)
   //   - does a sync and clears local storage
-  // - create notebook
-  // - rename notebook (requires key)
 
   //await SiteNotes.STORAGE.set({ [SiteNotes.SETTINGS_KEYS.AVAILABLE_NOTEBOOKS]: [] });
   //await SiteNotes.STORAGE.set({ [SiteNotes.SETTINGS_KEYS.ACTIVE_NOTEBOOK]: null });
