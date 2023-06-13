@@ -1,8 +1,8 @@
 'use strict';
 
 (async () => {
-  const NOTES_API_URL = 'https://localhost:7227/Notes';
-  const NOTEBOOKS_API_URL = 'https://localhost:7227/Notebooks';
+  const NOTES_API_URL = 'https://site-notes.azurewebsites.net/Notes';
+  const NOTEBOOKS_API_URL = 'https://site-notes.azurewebsites.net/Notebooks';
   const OPTS = async (notebook) => ({
     cache: 'no-cache',
     headers: {

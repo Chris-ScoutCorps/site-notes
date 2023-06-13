@@ -30,5 +30,5 @@
 
   "permissions": [ "storage", "tabs", "webRequest" ],
 
-  "host_permissions": [ "https://localhost:7227/*" ]
+  "host_permissions": [ "https://site-notes.azurewebsites.net/*" ]
 }
