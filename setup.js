@@ -218,6 +218,10 @@ const populateNotebooksDropDown = async () => {
 };
 
 (function initNotebooksButtons() {
+  if (!document.getElementById('site-notes-body')) {
+    return;
+  }
+
   const switchNotebook = async () => {
     const stored = await SiteNotes.STORAGE.get();
     const toRem = Object.keys(stored).filter(k => !Object.values(SiteNotes.SETTINGS_KEYS).includes(k));
