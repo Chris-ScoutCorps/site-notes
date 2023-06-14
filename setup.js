@@ -148,18 +148,18 @@ SiteNotes.decollide = (key, callback, timeout = 250) => {
         <select id="notebooks-select">
         </select>
         
-        <a href='#' id="rename-notebook-button" style="text-decoration: none; font-size: 2em;" alt="Rename Notebook" title="Rename Notebook">&#x270e;</a>
-        <a href='#' id="open-notebook-button" style="text-decoration: none; font-size: 2em;" alt="Open Notebook" title="Open Notebook">&#x1F513;</a>
-        <a href='#' id="copy-notebook-button" style="text-decoration: none; font-size: 2em;" alt="Copy Key for this Notebook" title="Copy Key for this Notebook">&#128273;</a>
-        <a href='#' id="create-notebook-button" style="text-decoration: none; font-size: 2em;" alt="Create Notebook" title="Create Notebook">+</a>
+        <a href='#' id="rename-notebook-button" style="text-decoration: none; font-size: 1.5em;" alt="Rename Notebook" title="Rename Notebook">&#x270e;</a>
+        <a href='#' id="open-notebook-button" style="text-decoration: none; font-size: 1.5em;" alt="Open Notebook" title="Open Notebook">&#x1F513;</a>
+        <a href='#' id="copy-notebook-button" style="text-decoration: none; font-size: 1.5em;" alt="Copy Key for this Notebook" title="Copy Key for this Notebook">&#128273;</a>
+        <a href='#' id="create-notebook-button" style="text-decoration: none; font-size: 1.5em;" alt="Create Notebook" title="Create Notebook">+</a>
       </div>
-      <a href='#' id="refresh-button" style="text-decoration: none; font-size: 2em;" alt="Sync" title="Sync">&#8635;</a>
+      <a href='#' id="refresh-button" style="text-decoration: none; font-size: 1.5em;" alt="Sync" title="Sync">&#8635;</a>
     </div>
 
     <div style="display: none; border-top: 1px solid lightgray; margin-top: 12px;" id="edit-notebook-area">
       <input id="notebook-name-or-key" type="text" />
-      <a href='#' id="edit-notebook-confirm" style="text-decoration: none; font-size: 2em; color: green;" alt="Rename Notebook" title="Rename Notebook">&#10004;</a>
-      <a href='#' id="edit-notebook-cancel" style="text-decoration: none; font-size: 2em; color: red;" alt="Cancel" title="Cancel">x</a>
+      <a href='#' id="edit-notebook-confirm" style="text-decoration: none; font-size: 1.5em; color: green;" alt="Rename Notebook" title="Rename Notebook">&#10004;</a>
+      <a href='#' id="edit-notebook-cancel" style="text-decoration: none; font-size: 1.5em; color: red;" alt="Cancel" title="Cancel">x</a>
     </div>
   `;
   }

@@ -25,7 +25,8 @@
   "sidebar_action": {
     "default_icon": "icons/icon-dev.png",
     "default_title": "Site Notes",
-    "default_panel": "sidebar/sidebar.html"
+    "default_panel": "sidebar/sidebar.html",
+    "browser_style": false
   },
 
   "permissions": [ "storage", "tabs", "webRequest" ],
