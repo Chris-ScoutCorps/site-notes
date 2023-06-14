@@ -3,7 +3,7 @@
 
   "name": "Site Notes",
   "description": "Take notes that show up for a specific website",
-  "version": "1.0",
+  "version": "2.0",
 
   "icons": {
     "48": "icons/icon48.png",
@@ -16,7 +16,7 @@
     "default_popup": "popup/popup.html"
   },
 
-  "permissions": [ "storage", "tabs", "webRequest" ],
+  "permissions": [ "storage", "tabs" ],
 
   "content_scripts": [
     {
