@@ -89,16 +89,14 @@ SiteNotes.decollide = (key, callback, timeout = 250) => {
         #site-notes-body.sidebar {
           height: calc(100vh - 10px);
         }
-        #site-notes-body .plus {
-          padding-left: 4px;
-          padding-top: 5px;
+        #site-notes-body label span {
+          font-size: 11px;
+        }
+        #site-notes-body input[type='radio'] {
+          transform: scale(0.8) translateY(4px);
         }
         #site-notes-body .delete-a {
           display: block;
-        }
-        #site-notes-body .delete {
-          padding-left: 4px;
-          padding-top: 4px;
         }
         #site-notes-body #search-results ul {
           margin-left: 25px;
@@ -109,6 +107,12 @@ SiteNotes.decollide = (key, callback, timeout = 250) => {
   if (SiteNotes.IS_CHROME && isPopup) {
     const stylesheet = document.createElement('style');
     stylesheet.innerText = `
+      #site-notes-body label span {
+        font-size: 11px;
+      }
+      #site-notes-body input[type='radio'] {
+        transform: scale(0.8) translateY(4px);
+      }
       #site-notes-body .delete-a {
         display: block;
       }`;
