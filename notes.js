@@ -189,7 +189,6 @@ SiteNotes.initNotes = function () {
 
   SiteNotes.reload = async (justSynced) => {
     SiteNotes.decollide("reload", async () => {
-      console.log(await SiteNotes.STORAGE.get())
       if (!(DOMAIN_NOTES || PAGE_NOTES)) {
         return;
       }

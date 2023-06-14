@@ -89,16 +89,14 @@ SiteNotes.decollide = (key, callback, timeout = 250) => {
         #site-notes-body.sidebar {
           height: calc(100vh - 10px);
         }
-        #site-notes-body .plus {
-          padding-left: 4px;
-          padding-top: 5px;
+        #site-notes-body label span {
+          font-size: 11px;
+        }
+        #site-notes-body input[type='radio'] {
+          transform: scale(0.8) translateY(4px);
         }
         #site-notes-body .delete-a {
           display: block;
-        }
-        #site-notes-body .delete {
-          padding-left: 4px;
-          padding-top: 4px;
         }
         #site-notes-body #search-results ul {
           margin-left: 25px;
@@ -109,6 +107,12 @@ SiteNotes.decollide = (key, callback, timeout = 250) => {
   if (SiteNotes.IS_CHROME && isPopup) {
     const stylesheet = document.createElement('style');
     stylesheet.innerText = `
+      #site-notes-body label span {
+        font-size: 11px;
+      }
+      #site-notes-body input[type='radio'] {
+        transform: scale(0.8) translateY(4px);
+      }
       #site-notes-body .delete-a {
         display: block;
       }`;
@@ -148,18 +152,18 @@ SiteNotes.decollide = (key, callback, timeout = 250) => {
         <select id="notebooks-select">
         </select>
         
-        <a href='#' id="rename-notebook-button" style="text-decoration: none; font-size: 2em;" alt="Rename Notebook" title="Rename Notebook">&#x270e;</a>
-        <a href='#' id="open-notebook-button" style="text-decoration: none; font-size: 2em;" alt="Open Notebook" title="Open Notebook">&#x1F513;</a>
-        <a href='#' id="copy-notebook-button" style="text-decoration: none; font-size: 2em;" alt="Copy Key for this Notebook" title="Copy Key for this Notebook">&#128273;</a>
-        <a href='#' id="create-notebook-button" style="text-decoration: none; font-size: 2em;" alt="Create Notebook" title="Create Notebook">+</a>
+        <a href='#' id="rename-notebook-button" style="text-decoration: none; font-size: 1.5em;" alt="Rename Notebook" title="Rename Notebook">&#x270e;</a>
+        <a href='#' id="open-notebook-button" style="text-decoration: none; font-size: 1.5em;" alt="Open Notebook" title="Open Notebook">&#x1F513;</a>
+        <a href='#' id="copy-notebook-button" style="text-decoration: none; font-size: 1.5em;" alt="Copy Key for this Notebook" title="Copy Key for this Notebook">&#128273;</a>
+        <a href='#' id="create-notebook-button" style="text-decoration: none; font-size: 1.5em;" alt="Create Notebook" title="Create Notebook">+</a>
       </div>
-      <a href='#' id="refresh-button" style="text-decoration: none; font-size: 2em;" alt="Sync" title="Sync">&#8635;</a>
+      <a href='#' id="refresh-button" style="text-decoration: none; font-size: 1.5em;" alt="Sync" title="Sync">&#8635;</a>
     </div>
 
     <div style="display: none; border-top: 1px solid lightgray; margin-top: 12px;" id="edit-notebook-area">
       <input id="notebook-name-or-key" type="text" />
-      <a href='#' id="edit-notebook-confirm" style="text-decoration: none; font-size: 2em; color: green;" alt="Rename Notebook" title="Rename Notebook">&#10004;</a>
-      <a href='#' id="edit-notebook-cancel" style="text-decoration: none; font-size: 2em; color: red;" alt="Cancel" title="Cancel">x</a>
+      <a href='#' id="edit-notebook-confirm" style="text-decoration: none; font-size: 1.5em; color: green;" alt="Rename Notebook" title="Rename Notebook">&#10004;</a>
+      <a href='#' id="edit-notebook-cancel" style="text-decoration: none; font-size: 1.5em; color: red;" alt="Cancel" title="Cancel">x</a>
     </div>
   `;
   }
@@ -218,6 +222,10 @@ const populateNotebooksDropDown = async () => {
 };
 
 (function initNotebooksButtons() {
+  if (!document.getElementById('site-notes-body')) {
+    return;
+  }
+
   const switchNotebook = async () => {
     const stored = await SiteNotes.STORAGE.get();
     const toRem = Object.keys(stored).filter(k => !Object.values(SiteNotes.SETTINGS_KEYS).includes(k));
@@ -305,6 +313,12 @@ const populateNotebooksDropDown = async () => {
   document.getElementById('edit-notebook-cancel').addEventListener('click', () => {
     document.getElementById('active-notebook-area').style.display = 'flex';
     document.getElementById('edit-notebook-area').style.display = 'none';
+  });
+
+  document.getElementById('notebook-name-or-key').addEventListener('keyup', e => {
+    if (e.code === 'Enter' || e.keyCode === 13) {
+      document.getElementById('edit-notebook-confirm').click();
+    }
   });
 })();
 
