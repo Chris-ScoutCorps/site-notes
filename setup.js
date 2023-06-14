@@ -310,6 +310,12 @@ const populateNotebooksDropDown = async () => {
     document.getElementById('active-notebook-area').style.display = 'flex';
     document.getElementById('edit-notebook-area').style.display = 'none';
   });
+
+  document.getElementById('notebook-name-or-key').addEventListener('keyup', e => {
+    if (e.code === 'Enter' || e.keyCode === 13) {
+      document.getElementById('edit-notebook-confirm').click();
+    }
+  });
 })();
 
 (async function migrations() {
