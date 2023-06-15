@@ -3,7 +3,7 @@
 
   "name": "Site Notes Dev",
   "description": "Take notes that show up for a specific website",
-  "version": "2.0",
+  "version": "2.1",
 
   "icons": {
     "48": "icons/icon48-dev.png",
