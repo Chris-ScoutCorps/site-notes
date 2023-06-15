@@ -138,7 +138,7 @@ SiteNotes.decollide = (key, callback, timeout = 250) => {
           <span>URLs & Titles Only</span>
         </label>
       </div>
-      <div id="search-results" style="width: 100%; margin-bottom: 10px; margin-top: 10px;"></div>
+      <div id="search-results" style="width: 100%; margin-bottom: 10px; margin-top: 10px; font-size: 0.75em;"></div>
     </div>
 
     <h4 id="domain-notes-lbl" style="width: 100%; margin-top: 0;"></h4>
